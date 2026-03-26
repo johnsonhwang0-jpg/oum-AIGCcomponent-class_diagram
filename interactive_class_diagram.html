@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UML Architect — Interactive Structural Modeling</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* === RESET & BASE === */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-deep:#0a0e1a;--bg-panel:#111827;--bg-card:#1a2235;--bg-hover:#243049;
+  --border:#2a3550;--border-light:#3a4a6b;
+  --text-primary:#e8ecf4;--text-secondary:#8895b0;--text-muted:#5a6a88;
+  --accent:#4f8eff;--accent-glow:#4f8eff33;--accent-bright:#6ba1ff;
+  --uml-bg:#fef9e7;--uml-border:#2c2c2c;--uml-header:#f5e6a3;--uml-text:#1a1a1a;
+  --success:#34d399;--success-bg:#34d39922;--error:#f87171;--error-bg:#f8717122;
+  --warn:#fbbf24;
+  --sidebar-w:280px;
+  --font-mono:'IBM Plex Mono',monospace;--font-body:'DM Sans',sans-serif;--font-display:'Playfair Display',serif;
+}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:var(--font-body);background:var(--bg-deep);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input,select{font-family:var(--font-mono);outline:none}
+
+/* === LAYOUT === */
+.app{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-w);background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* === SIDEBAR === */
+.sidebar-header{padding:28px 24px 20px;border-bottom:1px solid var(--border)}
+.sidebar-logo{font-family:var(--font-display);font-size:1.45rem;color:var(--text-primary);letter-spacing:-0.02em}
+.sidebar-logo span{color:var(--accent)}
+.sidebar-sub{font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:6px;font-family:var(--font-mono)}
+.stage-list{padding:20px 16px;flex:1;overflow-y:auto}
+.stage-item{display:flex;align-items:flex-start;gap:14px;padding:12px 12px;border-radius:10px;margin-bottom:4px;cursor:pointer;transition:all .25s}
+.stage-item:hover{background:var(--bg-hover)}
+.stage-item.active{background:var(--accent);background:linear-gradient(135deg,#4f8eff22,#4f8eff11)}
+.stage-item.active .stage-num{background:var(--accent);color:#fff;box-shadow:0 0 20px var(--accent-glow)}
+.stage-item.completed .stage-num{background:var(--success);color:#fff}
+.stage-num{width:32px;height:32px;border-radius:50%;background:var(--bg-card);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.75rem;font-weight:600;color:var(--text-muted);flex-shrink:0;transition:all .3s}
+.stage-info{flex:1;min-width:0}
+.stage-title{font-size:0.82rem;font-weight:600;color:var(--text-primary);margin-bottom:2px}
+.stage-desc{font-size:0.7rem;color:var(--text-muted);line-height:1.4}
+.stage-item.active .stage-title{color:var(--accent-bright)}
+.stage-item.completed .stage-title{color:var(--success)}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border);font-size:0.68rem;color:var(--text-muted);font-family:var(--font-mono);text-align:center}
+
+/* === PROGRESS BAR === */
+.progress-track{height:3px;background:var(--bg-card);width:100%}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--success));transition:width .6s cubic-bezier(.4,0,.2,1);width:0%}
+
+/* === MAIN CONTENT === */
+.content-area{flex:1;padding:40px 48px 32px;max-width:1100px;width:100%;margin:0 auto}
+.stage-badge{display:inline-flex;align-items:center;gap:8px;background:var(--accent);background:linear-gradient(135deg,#4f8eff22,#4f8eff08);border:1px solid #4f8eff44;padding:5px 14px;border-radius:20px;font-size:0.7rem;font-family:var(--font-mono);color:var(--accent-bright);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.stage-heading{font-family:var(--font-display);font-size:2.2rem;line-height:1.15;color:var(--text-primary);margin-bottom:10px;letter-spacing:-0.02em}
+.stage-intro{font-size:0.95rem;color:var(--text-secondary);line-height:1.65;max-width:680px;margin-bottom:32px}
+.stage-intro strong{color:var(--text-primary);font-weight:600}
+
+/* === TEACH BLOCKS === */
+.teach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+.teach-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;transition:all .3s}
+.teach-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.teach-card-icon{width:36px;height:36px;border-radius:8px;background:var(--accent);background:linear-gradient(135deg,#4f8eff33,#4f8eff11);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:12px}
+.teach-card h4{font-size:0.88rem;margin-bottom:6px;font-weight:600}
+.teach-card p{font-size:0.78rem;color:var(--text-secondary);line-height:1.55}
+
+/* === UML CLASS BOX (for teaching/display) === */
+.uml-class-box{background:var(--uml-bg);border:2.5px solid var(--uml-border);border-radius:3px;display:inline-block;min-width:220px;font-family:var(--font-mono);font-size:0.78rem;color:var(--uml-text);box-shadow:3px 3px 0 #00000022}
+.uml-class-box .uml-name{background:var(--uml-header);padding:10px 16px;font-weight:700;text-align:center;border-bottom:2px solid var(--uml-border);font-size:0.85rem}
+.uml-class-box .uml-section{padding:8px 16px;min-height:32px;border-bottom:1.5px solid var(--uml-border)}
+.uml-class-box .uml-section:last-child{border-bottom:none}
+.uml-class-box .uml-section div{padding:2px 0}
+
+/* === INTERACTIVE AREAS === */
+.interactive-area{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:24px;position:relative;overflow:hidden}
+.interactive-area::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.3}
+.interactive-label{font-size:0.72rem;font-family:var(--font-mono);color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.interactive-label::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* === DRAG & DROP === */
+.drag-source-area{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.drag-item{padding:8px 16px;background:var(--bg-hover);border:1.5px dashed var(--border-light);border-radius:8px;font-family:var(--font-mono);font-size:0.78rem;cursor:grab;transition:all .2s;user-select:none}
+.drag-item:hover{border-color:var(--accent);background:#4f8eff15}
+.drag-item.dragging{opacity:.4;transform:scale(.95)}
+.drag-item.placed{opacity:.3;pointer-events:none;border-style:solid;background:var(--success-bg);border-color:var(--success)}
+
+.drop-zone{min-height:50px;border:2px dashed var(--border);border-radius:8px;padding:12px;display:flex;align-items:center;justify-content:center;transition:all .25s;margin-bottom:8px}
+.drop-zone.drag-over{border-color:var(--accent);background:#4f8eff11}
+.drop-zone.filled{border-style:solid;border-color:var(--success);background:var(--success-bg)}
+.drop-zone.wrong{border-color:var(--error);background:var(--error-bg);animation:shake .4s}
+.drop-zone-label{font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)}
+.drop-zone .placed-text{font-family:var(--font-mono);font-size:0.82rem;font-weight:600;color:var(--success)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* === QUIZ === */
+.quiz-block{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px}
+.quiz-question{font-size:0.9rem;margin-bottom:14px;font-weight:500}
+.quiz-question code{background:#4f8eff22;color:var(--accent-bright);padding:2px 8px;border-radius:4px;font-family:var(--font-mono);font-size:0.82rem}
+.quiz-options{display:flex;gap:10px;flex-wrap:wrap}
+.quiz-opt{padding:8px 20px;background:var(--bg-card);border:1.5px solid var(--border);border-radius:8px;font-size:0.82rem;color:var(--text-primary);transition:all .2s}
+.quiz-opt:hover{border-color:var(--accent);background:#4f8eff11}
+.quiz-opt.correct{border-color:var(--success);background:var(--success-bg);color:var(--success)}
+.quiz-opt.wrong{border-color:var(--error);background:var(--error-bg);color:var(--error)}
+
+/* === STAGE 2: CLASS BUILDER === */
+.builder-row{display:flex;gap:28px;align-items:flex-start}
+.builder-form{flex:1}
+.builder-preview{flex:0 0 280px;position:sticky;top:20px}
+.input-group{margin-bottom:14px}
+.input-group label{display:block;font-size:0.72rem;font-family:var(--font-mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.input-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.input-row input{flex:1;padding:8px 12px;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:0.8rem}
+.input-row input:focus{border-color:var(--accent)}
+.input-row select{padding:8px 10px;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:0.8rem}
+.btn-add{padding:6px 12px;background:var(--accent);color:#fff;border-radius:6px;font-size:0.75rem;font-weight:600;transition:all .2s}
+.btn-add:hover{background:var(--accent-bright)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;font-family:var(--font-mono);font-size:0.75rem;margin:3px;color:var(--text-primary)}
+.chip .chip-x{cursor:pointer;color:var(--error);font-weight:700;font-size:0.85rem}
+.chip.valid{border-color:var(--success);background:var(--success-bg)}
+
+.flip-card{width:100%;max-width:500px;height:260px;perspective:1000px;margin:0 auto 20px}
+.flip-card-inner{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+.flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
+.flip-card-front,.flip-card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;padding:24px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.flip-card-front{background:linear-gradient(135deg,#4f8eff22,#4f8eff08);border:2px solid #4f8eff44;cursor:pointer}
+.flip-card-front:hover{border-color:var(--accent)}
+.flip-card-front .flip-icon{font-size:2.5rem;margin-bottom:16px;animation:pulse-bounce 2s infinite}
+@keyframes pulse-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.flip-card-front h4{font-size:1rem;color:var(--text-primary);margin-bottom:8px}
+.flip-card-front p{font-size:0.8rem;color:var(--text-secondary)}
+.flip-card-front .flip-hint{margin-top:16px;font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)}
+.flip-card-back{background:var(--bg-card);border:1px solid var(--border);transform:rotateY(180deg);text-align:left;justify-content:flex-start;overflow-y:auto}
+.flip-card-back h4{font-size:0.88rem;color:var(--accent);margin-bottom:12px;font-weight:600}
+.flip-card-back .hint-section{margin-bottom:12px}
+.flip-card-back .hint-label{font-size:0.72rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.flip-card-back .hint-chips{display:flex;gap:6px;flex-wrap:wrap}
+.flip-card-back .hint-text{font-size:0.78rem;color:var(--text-secondary);line-height:1.5}
+.flip-card:not(.flipped) .flip-card-back{pointer-events:none}
+
+/* === STAGE 3: CANVAS === */
+.canvas-container{position:relative;background:var(--bg-deep);border:1px solid var(--border);border-radius:12px;height:480px;overflow:hidden}
+.canvas-container svg{width:100%;height:100%}
+.canvas-class{cursor:pointer;user-select:none}
+.canvas-class:hover rect:first-child{stroke:var(--accent);stroke-width:3}
+.canvas-class.selected rect:first-child{stroke:var(--accent);stroke-width:3;filter:drop-shadow(0 0 8px #4f8eff55)}
+.canvas-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--bg-panel);border:1px solid var(--border);padding:8px 20px;border-radius:20px;font-size:0.75rem;color:var(--text-secondary);font-family:var(--font-mono);pointer-events:none}
+.assoc-line{stroke:#8895b0;stroke-width:2;cursor:pointer;transition:stroke .2s}
+.assoc-line:hover{stroke:var(--accent)}
+.assoc-line.correct{stroke:var(--success)}
+
+/* === STAGE 4: MULTIPLICITY === */
+.mult-table{width:100%;border-collapse:collapse;margin-top:16px}
+.mult-table th{text-align:left;padding:10px 14px;font-size:0.72rem;font-family:var(--font-mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.mult-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:0.82rem;vertical-align:middle}
+.mult-table select{padding:6px 10px;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-family:var(--font-mono);font-size:0.78rem}
+.mult-table select.correct{border-color:var(--success);background:var(--success-bg)}
+.mult-table select.wrong{border-color:var(--error);background:var(--error-bg)}
+.mult-table .check-icon{font-size:1rem;margin-left:6px}
+
+/* === STAGE 5: INHERITANCE === */
+.inherit-canvas{position:relative;background:var(--bg-deep);border:1px solid var(--border);border-radius:12px;min-height:400px;overflow:hidden}
+.inherit-drop{border:2px dashed var(--border);border-radius:8px;min-height:80px;padding:10px;margin:6px;transition:all .25s}
+.inherit-drop.drag-over{border-color:var(--accent);background:#4f8eff11}
+.inherit-drop.filled{border-style:solid;border-color:var(--success);background:var(--success-bg)}
+.inherit-item{padding:8px 16px;background:var(--bg-hover);border:1.5px solid var(--border-light);border-radius:8px;font-family:var(--font-mono);font-size:0.78rem;cursor:grab;transition:all .2s;user-select:none;display:inline-block;margin:4px}
+.inherit-item:hover{border-color:var(--accent)}
+.inherit-item.placed{opacity:.35;pointer-events:none}
+
+/* === STAGE 6: FINAL === */
+.final-canvas{background:var(--bg-deep);border:1px solid var(--border);border-radius:12px;min-height:550px;overflow:auto;position:relative}
+.score-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:16px}
+.score-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:0.82rem}
+.score-row:last-child{border-bottom:none}
+.score-val{font-family:var(--font-mono);font-weight:600}
+.score-val.pass{color:var(--success)}
+.score-val.fail{color:var(--error)}
+
+/* === BUTTONS === */
+.nav-bar{display:flex;justify-content:space-between;align-items:center;padding:20px 48px;border-top:1px solid var(--border);background:var(--bg-panel)}
+.btn{padding:10px 24px;border-radius:8px;font-size:0.82rem;font-weight:600;transition:all .25s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-bright);transform:translateY(-1px);box-shadow:0 4px 16px var(--accent-glow)}
+.btn-secondary{background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--text-muted);color:var(--text-primary)}
+.btn-success{background:var(--success);color:#fff}
+.btn:disabled{opacity:.35;pointer-events:none}
+
+/* === FEEDBACK TOAST === */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 24px;border-radius:10px;font-size:0.82rem;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--success);color:#fff}
+.toast.error{background:var(--error);color:#fff}
+.toast.info{background:var(--accent);color:#fff}
+
+/* === CELEBRATION === */
+.confetti-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10000}
+.confetti{position:absolute;width:10px;height:10px;top:-10px;opacity:0}
+
+/* === ANIMATIONS === */
+.fade-in{animation:fadeIn .5s ease forwards}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.slide-up{animation:slideUp .4s ease forwards}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-light)}
+
+/* === TEACH BOXES for Stage 4 === */
+.mult-examples{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.mult-ex{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.mult-ex .mult-sym{font-family:var(--font-mono);font-size:1.4rem;font-weight:700;color:var(--accent);margin-bottom:6px}
+.mult-ex .mult-mean{font-size:0.72rem;color:var(--text-secondary);line-height:1.4}
+
+/* === Export button === */
+.btn-export{position:absolute;top:12px;right:12px;z-index:10;padding:6px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);font-size:0.72rem;font-family:var(--font-mono);cursor:pointer;transition:all .2s}
+.btn-export:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Visually hidden stages */
+.stage-content{display:none}
+.stage-content.active{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">UML <span>Architect</span></div>
+      <div class="sidebar-sub">Structural Modeling Lab</div>
+    </div>
+    <div class="stage-list" id="stageList"></div>
+    <div class="sidebar-footer">ATM System Design Project</div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="content-area" id="contentArea">
+      <!-- Stages injected by JS -->
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn btn-secondary" id="btnBack" onclick="navigateStage(-1)">&#8592; Back</button>
+      <div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted)" id="navLabel">Stage 1 of 6</div>
+      <button class="btn btn-primary" id="btnNext" onclick="navigateStage(1)">Next &#8594;</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="confetti-container" id="confettiContainer"></div>
+
+<script>
+// ========================
+// STATE
+// ========================
+const STATE = {
+  currentStage: 0,
+  completed: [false,false,false,false,false,false],
+  // Stage 1
+  s1Drops: {name:null, attrs:null, methods:null},
+  s1Quiz: [false,false,false],
+  // Stage 2
+  s2Attrs: [],
+  s2Methods: [],
+  // Stage 3
+  s3Selected: null,
+  s3Associations: [],
+  // Stage 4
+  s4Answers: {},
+  // Stage 5
+  s5Placed: {},
+};
+
+const STAGES = [
+  {title:'What is a Class?', desc:'The three parts'},
+  {title:'Create Your First Class', desc:'Building a single class'},
+  {title:'Connecting Classes', desc:'Association relationships'},
+  {title:'How Many?', desc:'Understanding multiplicity'},
+  {title:'Family Trees', desc:'Inheritance relationships'},
+  {title:'Complete ATM System', desc:'Final assembly'},
+];
+
+const CLASSES_DATA = {
+  Customer:{attrs:['name: String','customerId: String','address: String'],methods:['authenticate()','makeTransaction()']},
+  Account:{attrs:['accountNumber: String','balance: double','pin: int'],methods:['deposit()','withdraw()','checkBalance()','getStatement()']},
+  SavingsAccount:{attrs:['interestRate: double'],methods:['calculateInterest()']},
+  CheckingAccount:{attrs:['overdraftLimit: double'],methods:['processCheck()']},
+  Bank:{attrs:['bankName: String','bankCode: String'],methods:['verifyAccount()','processTransaction()']},
+  ATM:{attrs:['atmId: String','location: String'],methods:['displayMenu()','readCard()','ejectCard()']},
+  Transaction:{attrs:['transactionId: String','date: Date','amount: double','type: String'],methods:['execute()','printReceipt()']},
+  CardReader:{attrs:['cardSlot: boolean'],methods:['readCard()','ejectCard()']},
+  CashDispenser:{attrs:['cashAvailable: double'],methods:['dispenseCash()','checkCashLevel()']},
+};
+
+const REQUIRED_ASSOCS = [
+  ['Customer','Account','1','0..*'],
+  ['Customer','Transaction','1','0..*'],
+  ['Bank','Account','1','0..*'],
+  ['Bank','ATM','1','1..*'],
+  ['ATM','Transaction','1','0..*'],
+  ['ATM','CardReader','1','1'],
+  ['ATM','CashDispenser','1','1'],
+  ['Account','Transaction','1','0..*'],
+];
+
+const S3_POSITIONS = {
+  Customer:{x:60,y:30},
+  Account:{x:360,y:30},
+  Bank:{x:60,y:260},
+  ATM:{x:360,y:260},
+  Transaction:{x:680,y:140},
+};
+
+// ========================
+// SIDEBAR
+// ========================
+function renderSidebar(){
+  const el=document.getElementById('stageList');
+  el.innerHTML=STAGES.map((s,i)=>{
+    const cls=i===STATE.currentStage?'active':STATE.completed[i]?'completed':'';
+    const icon=STATE.completed[i]?'&#10003;':(i+1);
+    return `<div class="stage-item ${cls}" onclick="goToStage(${i})">
+      <div class="stage-num">${icon}</div>
+      <div class="stage-info"><div class="stage-title">${s.title}</div><div class="stage-desc">${s.desc}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function updateProgress(){
+  const pct=((STATE.currentStage+1)/6)*100;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('navLabel').textContent=`Stage ${STATE.currentStage+1} of 6`;
+  document.getElementById('btnBack').disabled=STATE.currentStage===0;
+  document.getElementById('btnNext').textContent=STATE.currentStage===5?'Finish \u2192':'Next \u2192';
+}
+
+// ========================
+// NAVIGATION
+// ========================
+function goToStage(idx){
+  STATE.currentStage=idx;
+  renderAll();
+}
+function navigateStage(dir){
+  const next=STATE.currentStage+dir;
+  if(next<0||next>5)return;
+  if(dir>0 && STATE.currentStage===5){celebrate();return;}
+  STATE.currentStage=next;
+  renderAll();
+}
+
+function renderAll(){
+  renderSidebar();
+  updateProgress();
+  renderStage();
+}
+
+// ========================
+// UML BOX HELPER
+// ========================
+function umlBoxHTML(name,attrs,methods,opts={}){
+  const w=opts.mini?'':'min-width:220px;';
+  return `<div class="uml-class-box" style="${w}${opts.style||''}">
+    <div class="uml-name">${name}</div>
+    <div class="uml-section">${attrs.map(a=>`<div>${a}</div>`).join('')||'<div style="color:#999;font-style:italic">—</div>'}</div>
+    <div class="uml-section">${methods.map(m=>`<div>${m}</div>`).join('')||'<div style="color:#999;font-style:italic">—</div>'}</div>
+  </div>`;
+}
+
+// ========================
+// STAGE RENDERERS
+// ========================
+function renderStage(){
+  const area=document.getElementById('contentArea');
+  area.innerHTML='';
+  const fns=[renderStage1,renderStage2,renderStage3,renderStage4,renderStage5,renderStage6];
+  fns[STATE.currentStage](area);
+  area.querySelector('.stage-content')?.classList.add('active');
+}
+
+// --- STAGE 1 ---
+function renderStage1(area){
+  const html=`<div class="stage-content active fade-in">
+    <div class="stage-badge">Stage 1</div>
+    <h1 class="stage-heading">What is a Class?</h1>
+    <p class="stage-intro">In UML, a <strong>class</strong> is the fundamental building block of structural models. Every class is drawn as a rectangle divided into <strong>three compartments</strong>. Let's learn what each one holds.</p>
+
+    <div class="teach-grid">
+      <div class="teach-card">
+        <div class="teach-card-icon">&#9671;</div>
+        <h4>Class Name</h4>
+        <p>The top section. Contains the name of the class in bold. Represents the concept or entity being modeled.</p>
+      </div>
+      <div class="teach-card">
+        <div class="teach-card-icon">&#9776;</div>
+        <h4>Attributes</h4>
+        <p>The middle section. Lists the data a class holds — its properties. Written as <code style="font-size:.7rem;background:#4f8eff22;color:#6ba1ff;padding:1px 4px;border-radius:3px">name: Type</code>.</p>
+      </div>
+      <div class="teach-card">
+        <div class="teach-card-icon">&#9881;</div>
+        <h4>Methods</h4>
+        <p>The bottom section. Lists the behaviors or operations the class can perform. Written as <code style="font-size:.7rem;background:#4f8eff22;color:#6ba1ff;padding:1px 4px;border-radius:3px">name()</code>.</p>
+      </div>
+    </div>
+
+    <div class="interactive-area">
+      <div class="interactive-label">Interactive — Drag labels to the correct sections</div>
+      <div style="display:flex;gap:32px;align-items:flex-start;">
+        <div style="flex:1;">
+          <div class="drag-source-area" id="s1DragSource">
+            <div class="drag-item" draggable="true" data-target="methods" id="s1d_methods">Methods</div>
+            <div class="drag-item" draggable="true" data-target="name" id="s1d_name">Class Name</div>
+            <div class="drag-item" draggable="true" data-target="attrs" id="s1d_attrs">Attributes</div>
+          </div>
+          <div style="background:var(--uml-bg);border:2.5px solid var(--uml-border);border-radius:3px;width:260px;">
+            <div class="drop-zone" id="s1drop_name" data-slot="name" style="border-radius:3px 3px 0 0;border-bottom:2px solid var(--uml-border);background:var(--uml-header)"><span class="drop-zone-label">Section 1 (top)</span></div>
+            <div class="drop-zone" id="s1drop_attrs" data-slot="attrs" style="border-bottom:1.5px solid var(--uml-border)"><span class="drop-zone-label">Section 2 (middle)</span></div>
+            <div class="drop-zone" id="s1drop_methods" data-slot="methods"><span class="drop-zone-label">Section 3 (bottom)</span></div>
+          </div>
+        </div>
+        <div style="flex:0 0 auto;">
+          <div style="font-size:.72rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:10px;">EXAMPLE: BankAccount</div>
+          ${umlBoxHTML('BankAccount',['accountId: String','balance: double','ownerName: String'],['deposit()','withdraw()','getBalance()'])}
+        </div>
+      </div>
+    </div>
+
+    <div class="interactive-area" id="s1QuizArea">
+      <div class="interactive-label">Quiz — Identify the section</div>
+      <div class="quiz-block" id="s1q0">
+        <div class="quiz-question">Where does <code>balance: double</code> belong?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answerQuiz(0,'name',this)">Class Name</button>
+          <button class="quiz-opt" onclick="answerQuiz(0,'attrs',this)">Attributes</button>
+          <button class="quiz-opt" onclick="answerQuiz(0,'methods',this)">Methods</button>
+        </div>
+      </div>
+      <div class="quiz-block" id="s1q1">
+        <div class="quiz-question">Where does <code>withdraw()</code> belong?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answerQuiz(1,'name',this)">Class Name</button>
+          <button class="quiz-opt" onclick="answerQuiz(1,'attrs',this)">Attributes</button>
+          <button class="quiz-opt" onclick="answerQuiz(1,'methods',this)">Methods</button>
+        </div>
+      </div>
+      <div class="quiz-block" id="s1q2">
+        <div class="quiz-question">Where does <code>BankAccount</code> belong?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answerQuiz(2,'name',this)">Class Name</button>
+          <button class="quiz-opt" onclick="answerQuiz(2,'attrs',this)">Attributes</button>
+          <button class="quiz-opt" onclick="answerQuiz(2,'methods',this)">Methods</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  area.innerHTML=html;
+  initStage1DnD();
+  restoreStage1();
+}
+
+function initStage1DnD(){
+  const items=document.querySelectorAll('#s1DragSource .drag-item');
+  const zones=document.querySelectorAll('[id^="s1drop_"]');
+  items.forEach(item=>{
+    item.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',item.dataset.target);item.classList.add('dragging')});
+    item.addEventListener('dragend',()=>item.classList.remove('dragging'));
+  });
+  zones.forEach(zone=>{
+    zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over')});
+    zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();zone.classList.remove('drag-over');
+      const val=e.dataTransfer.getData('text/plain');
+      const slot=zone.dataset.slot;
+      if(val===slot){
+        zone.classList.add('filled');
+        zone.innerHTML=`<span class="placed-text">${val==='name'?'Class Name':val==='attrs'?'Attributes':'Methods'}</span>`;
+        STATE.s1Drops[slot]=val;
+        document.getElementById('s1d_'+val)?.classList.add('placed');
+        showToast('Correct!','success');
+        checkStage1();
+      } else {
+        zone.classList.add('wrong');
+        setTimeout(()=>zone.classList.remove('wrong'),500);
+        showToast('Not quite — try again!','error');
+      }
+    });
+  });
+}
+
+function restoreStage1(){
+  ['name','attrs','methods'].forEach(slot=>{
+    if(STATE.s1Drops[slot]){
+      const zone=document.getElementById('s1drop_'+slot);
+      if(zone){zone.classList.add('filled');zone.innerHTML=`<span class="placed-text">${slot==='name'?'Class Name':slot==='attrs'?'Attributes':'Methods'}</span>`}
+      const di=document.getElementById('s1d_'+slot);
+      if(di)di.classList.add('placed');
+    }
+  });
+  STATE.s1Quiz.forEach((done,i)=>{
+    if(done){
+      const correct=['attrs','methods','name'][i];
+      const block=document.getElementById('s1q'+i);
+      if(block){block.querySelectorAll('.quiz-opt').forEach(b=>{b.disabled=true;if(b.textContent===(correct==='name'?'Class Name':correct==='attrs'?'Attributes':'Methods'))b.classList.add('correct')})}
+    }
+  });
+}
+
+const QUIZ_ANSWERS=['attrs','methods','name'];
+function answerQuiz(idx,answer,btn){
+  if(STATE.s1Quiz[idx])return;
+  const correct=QUIZ_ANSWERS[idx];
+  if(answer===correct){
+    btn.classList.add('correct');
+    STATE.s1Quiz[idx]=true;
+    btn.parentElement.querySelectorAll('.quiz-opt').forEach(b=>b.disabled=true);
+    showToast('Correct!','success');
+    checkStage1();
+  } else {
+    btn.classList.add('wrong');
+    setTimeout(()=>btn.classList.remove('wrong'),600);
+    showToast('Try again!','error');
+  }
+}
+
+function checkStage1(){
+  const dropsOk=STATE.s1Drops.name&&STATE.s1Drops.attrs&&STATE.s1Drops.methods;
+  const quizOk=STATE.s1Quiz.every(Boolean);
+  if(dropsOk&&quizOk){STATE.completed[0]=true;renderSidebar();showToast('Stage 1 Complete!','success')}
+}
+
+// --- STAGE 2 ---
+function renderStage2(area){
+  const expected={attrs:['accountNumber: String','balance: double','pin: int'],methods:['deposit()','withdraw()','checkBalance()']};
+  const html=`<div class="stage-content active fade-in">
+    <div class="stage-badge">Stage 2</div>
+    <h1 class="stage-heading">Create Your First Class</h1>
+    <p class="stage-intro">Now it's your turn. Build the <strong>Account</strong> class by adding the correct attributes and methods. The UML box on the right updates live as you add items.</p>
+
+    <div class="interactive-area">
+      <div class="interactive-label">Class Builder</div>
+      <div class="builder-row">
+        <div class="builder-form">
+          <div class="input-group">
+            <label>Add Attributes <span style="color:var(--text-muted)">(pick from suggestions)</span></label>
+            <div id="s2AttrChips" style="margin-bottom:8px"></div>
+            <div class="input-row">
+              <select id="s2AttrSelect">
+                <option value="">— select attribute —</option>
+                <option value="accountNumber: String">accountNumber: String</option>
+                <option value="balance: double">balance: double</option>
+                <option value="pin: int">pin: int</option>
+                <option value="ownerName: String">ownerName: String</option>
+                <option value="createdDate: Date">createdDate: Date</option>
+              </select>
+              <button class="btn-add" onclick="addS2Attr()">+ Add</button>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Add Methods <span style="color:var(--text-muted)">(pick from suggestions)</span></label>
+            <div id="s2MethodChips" style="margin-bottom:8px"></div>
+            <div class="input-row">
+              <select id="s2MethodSelect">
+                <option value="">— select method —</option>
+                <option value="deposit()">deposit()</option>
+                <option value="withdraw()">withdraw()</option>
+                <option value="checkBalance()">checkBalance()</option>
+                <option value="transferFunds()">transferFunds()</option>
+                <option value="closeAccount()">closeAccount()</option>
+              </select>
+              <button class="btn-add" onclick="addS2Method()">+ Add</button>
+            </div>
+          </div>
+          <div id="s2Feedback" style="margin-top:10px;font-size:.8rem;font-family:var(--font-mono);"></div>
+        </div>
+        <div class="builder-preview">
+          <div style="font-size:.72rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:10px;">LIVE PREVIEW</div>
+          <div id="s2Preview"></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  area.innerHTML=html;
+  renderS2Preview();
+  renderS2Chips();
+}
+
+function addS2Attr(){
+  const sel=document.getElementById('s2AttrSelect');
+  const val=sel.value;if(!val)return;
+  if(STATE.s2Attrs.includes(val)){showToast('Already added','info');return}
+  STATE.s2Attrs.push(val);sel.value='';
+  renderS2Chips();renderS2Preview();checkStage2();
+}
+function addS2Method(){
+  const sel=document.getElementById('s2MethodSelect');
+  const val=sel.value;if(!val)return;
+  if(STATE.s2Methods.includes(val)){showToast('Already added','info');return}
+  STATE.s2Methods.push(val);sel.value='';
+  renderS2Chips();renderS2Preview();checkStage2();
+}
+function removeS2Attr(i){STATE.s2Attrs.splice(i,1);renderS2Chips();renderS2Preview();checkStage2()}
+function removeS2Method(i){STATE.s2Methods.splice(i,1);renderS2Chips();renderS2Preview();checkStage2()}
+
+function renderS2Chips(){
+  const expected_attrs=['accountNumber: String','balance: double','pin: int'];
+  const expected_methods=['deposit()','withdraw()','checkBalance()'];
+  const ac=document.getElementById('s2AttrChips');
+  if(ac)ac.innerHTML=STATE.s2Attrs.map((a,i)=>`<span class="chip ${expected_attrs.includes(a)?'valid':''}">${a}<span class="chip-x" onclick="removeS2Attr(${i})">&times;</span></span>`).join('');
+  const mc=document.getElementById('s2MethodChips');
+  if(mc)mc.innerHTML=STATE.s2Methods.map((m,i)=>`<span class="chip ${expected_methods.includes(m)?'valid':''}">${m}<span class="chip-x" onclick="removeS2Method(${i})">&times;</span></span>`).join('');
+}
+function renderS2Preview(){
+  const el=document.getElementById('s2Preview');
+  if(el)el.innerHTML=umlBoxHTML('Account',STATE.s2Attrs,STATE.s2Methods);
+}
+function checkStage2(){
+  const ea=['accountNumber: String','balance: double','pin: int'];
+  const em=['deposit()','withdraw()','checkBalance()'];
+  const attrsOk=ea.every(a=>STATE.s2Attrs.includes(a));
+  const methOk=em.every(m=>STATE.s2Methods.includes(m));
+  const fb=document.getElementById('s2Feedback');
+  if(attrsOk&&methOk){
+    STATE.completed[1]=true;renderSidebar();
+    if(fb)fb.innerHTML='<span style="color:var(--success)">&#10003; All required attributes and methods added!</span>';
+    showToast('Stage 2 Complete!','success');
+  } else {
+    STATE.completed[1]=false;
+    const missing=[];
+    if(!attrsOk)missing.push(`${ea.filter(a=>!STATE.s2Attrs.includes(a)).length} attribute(s)`);
+    if(!methOk)missing.push(`${em.filter(m=>!STATE.s2Methods.includes(m)).length} method(s)`);
+    if(fb)fb.innerHTML=`<span style="color:var(--warn)">Still missing: ${missing.join(', ')}</span>`;
+  }
+}
+
+// --- STAGE 3 ---
+function renderStage3(area){
+  const html=`<div class="stage-content active fade-in">
+    <div class="stage-badge">Stage 3</div>
+    <h1 class="stage-heading">Connecting Classes</h1>
+    <p class="stage-intro">Classes don't exist in isolation. <strong>Associations</strong> show relationships between classes — drawn as solid lines connecting them. Click one class, then click another to draw an association.</p>
+
+    <div class="interactive-area">
+      <div class="interactive-label">Click two classes to create an association — ${STATE.s3Associations.length} / 8 connections made</div>
+      <div class="canvas-container" id="s3Canvas"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="s3AssocList"></div>
+    </div>
+  </div>`;
+  area.innerHTML=html;
+  renderS3Canvas();
+}
+
+function renderS3Canvas(){
+  const container=document.getElementById('s3Canvas');
+  const W=container.clientWidth||960, H=480;
+  // Position classes
+  const positions={
+    Customer:{x:W*0.08,y:20},
+    Account:{x:W*0.38,y:20},
+    Transaction:{x:W*0.68,y:20},
+    Bank:{x:W*0.08,y:260},
+    ATM:{x:W*0.38,y:260},
+    CardReader:{x:W*0.62,y:300},
+    CashDispenser:{x:W*0.78,y:260},
+  };
+
+  let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
+  // Grid dots
+  for(let gx=0;gx<W;gx+=30)for(let gy=0;gy<H;gy+=30)svg+=`<circle cx="${gx}" cy="${gy}" r="0.7" fill="#2a3550"/>`;
+
+  // Draw existing associations
+  STATE.s3Associations.forEach(([a,b])=>{
+    const pa=positions[a],pb=positions[b];
+    if(pa&&pb){
+      const ax=pa.x+100,ay=pa.y+60,bx=pb.x+100,by=pb.y+60;
+      svg+=`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" class="assoc-line correct" stroke-width="2"/>`;
+    }
+  });
+
+  // Draw class boxes
+  Object.entries(positions).forEach(([name,pos])=>{
+    const cd=CLASSES_DATA[name];
+    const bw=200,headerH=30;
+    const attrH=Math.max(24,cd.attrs.length*18+10);
+    const methH=Math.max(24,cd.methods.length*18+10);
+    const totalH=headerH+attrH+methH;
+    const isSelected=STATE.s3Selected===name;
+    svg+=`<g class="canvas-class${isSelected?' selected':''}" data-name="${name}" onclick="selectS3Class('${name}')">
+      <rect x="${pos.x}" y="${pos.y}" width="${bw}" height="${totalH}" fill="#fef9e7" stroke="#2c2c2c" stroke-width="2" rx="2"/>
+      <rect x="${pos.x}" y="${pos.y}" width="${bw}" height="${headerH}" fill="#f5e6a3" stroke="#2c2c2c" stroke-width="2" rx="2"/>
+      <text x="${pos.x+bw/2}" y="${pos.y+20}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="700" fill="#1a1a1a">${name}</text>
+      <line x1="${pos.x}" y1="${pos.y+headerH}" x2="${pos.x+bw}" y2="${pos.y+headerH}" stroke="#2c2c2c" stroke-width="1.5"/>`;
+    cd.attrs.forEach((a,i)=>{
+      svg+=`<text x="${pos.x+10}" y="${pos.y+headerH+16+i*18}" font-family="IBM Plex Mono,monospace" font-size="10" fill="#1a1a1a">${a}</text>`;
+    });
+    svg+=`<line x1="${pos.x}" y1="${pos.y+headerH+attrH}" x2="${pos.x+bw}" y2="${pos.y+headerH+attrH}" stroke="#2c2c2c" stroke-width="1"/>`;
+    cd.methods.forEach((m,i)=>{
+      svg+=`<text x="${pos.x+10}" y="${pos.y+headerH+attrH+16+i*18}" font-family="IBM Plex Mono,monospace" font-size="10" fill="#1a1a1a">${m}</text>`;
+    });
+    svg+=`</g>`;
+  });
+
+  svg+=`</svg>`;
+  container.innerHTML=svg+(STATE.s3Selected?`<div class="canvas-hint">Now click another class to connect with <strong>${STATE.s3Selected}</strong></div>`:`<div class="canvas-hint">Click a class to start drawing an association</div>`);
+
+  // Assoc list
+  const listEl=document.getElementById('s3AssocList');
+  if(listEl)listEl.innerHTML=STATE.s3Associations.map(([a,b])=>`<span class="chip valid">${a} — ${b}</span>`).join('');
+}
+
+function selectS3Class(name){
+  if(!STATE.s3Selected){
+    STATE.s3Selected=name;
+    renderS3Canvas();
+  } else if(STATE.s3Selected===name){
+    STATE.s3Selected=null;
+    renderS3Canvas();
+  } else {
+    const a=STATE.s3Selected,b=name;
+    STATE.s3Selected=null;
+    // Check if this is a valid association
+    const valid=REQUIRED_ASSOCS.some(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a));
+    const exists=STATE.s3Associations.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
+    if(exists){showToast('Already connected!','info');renderS3Canvas();return}
+    if(valid){
+      // Normalize order
+      const ra=REQUIRED_ASSOCS.find(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a));
+      STATE.s3Associations.push([ra[0],ra[1]]);
+      showToast(`Connected ${ra[0]} — ${ra[1]}!`,'success');
+      if(STATE.s3Associations.length===8){STATE.completed[2]=true;renderSidebar();showToast('Stage 3 Complete! All associations found.','success')}
+    } else {
+      showToast(`${a} and ${b} don't need a direct association.`,'error');
+    }
+    renderS3Canvas();
+  }
+}
+
+// --- STAGE 4 ---
+function renderStage4(area){
+  const html=`<div class="stage-content active fade-in">
+    <div class="stage-badge">Stage 4</div>
+    <h1 class="stage-heading">How Many?</h1>
+    <p class="stage-intro"><strong>Multiplicity</strong> defines how many instances of one class relate to another. It appears at each end of an association line. Master these four common notations:</p>
+
+    <div class="mult-examples">
+      <div class="mult-ex"><div class="mult-sym">1</div><div class="mult-mean">Exactly one<br><em>e.g., one ATM has one card reader</em></div></div>
+      <div class="mult-ex"><div class="mult-sym">0..1</div><div class="mult-mean">Zero or one<br><em>e.g., a person may have one spouse</em></div></div>
+      <div class="mult-ex"><div class="mult-sym">0..*</div><div class="mult-mean">Zero or many<br><em>e.g., a customer may have many accounts</em></div></div>
+      <div class="mult-ex"><div class="mult-sym">1..*</div><div class="mult-mean">One or more<br><em>e.g., a bank has at least one ATM</em></div></div>
+    </div>
+
+    <div class="interactive-area">
+      <div class="interactive-label">Set the multiplicity for each association</div>
+      <table class="mult-table">
+        <thead><tr><th>Class A</th><th>Multiplicity A</th><th></th><th>Multiplicity B</th><th>Class B</th><th></th></tr></thead>
+        <tbody id="s4TableBody"></tbody>
+      </table>
+    </div>
+  </div>`;
+  area.innerHTML=html;
+  renderS4Table();
+}
+
+function renderS4Table(){
+  const tbody=document.getElementById('s4TableBody');
+  if(!tbody)return;
+  const opts=['','1','0..1','0..*','1..*'];
+  tbody.innerHTML=REQUIRED_ASSOCS.map(([a,b,ma,mb],i)=>{
+    const key=a+'_'+b;
+    const ans=STATE.s4Answers[key]||{a:'',b:''};
+    const aOk=ans.a===ma, bOk=ans.b===mb;
+    const aClass=ans.a?(aOk?'correct':'wrong'):'';
+    const bClass=ans.b?(bOk?'correct':'wrong'):'';
+    const check=(aOk&&bOk)?'<span class="check-icon" style="color:var(--success)">&#10003;</span>':'';
+    return `<tr>
+      <td style="font-weight:600">${a}</td>
+      <td><select class="${aClass}" onchange="setMult(${i},'a',this.value)">
+        ${opts.map(o=>`<option value="${o}"${ans.a===o?' selected':''}>${o||'—'}</option>`).join('')}
+      </select></td>
+      <td style="text-align:center;color:var(--text-muted)">———</td>
+      <td><select class="${bClass}" onchange="setMult(${i},'b',this.value)">
+        ${opts.map(o=>`<option value="${o}"${ans.b===o?' selected':''}>${o||'—'}</option>`).join('')}
+      </select></td>
+      <td style="font-weight:600">${b}</td>
+      <td>${check}</td>
+    </tr>`;
+  }).join('');
+}
+
+function setMult(i,side,val){
+  const r=REQUIRED_ASSOCS[i];
+  const key=r[0]+'_'+r[1];
+  if(!STATE.s4Answers[key])STATE.s4Answers[key]={a:'',b:''};
+  STATE.s4Answers[key][side]=val;
+  const ans=STATE.s4Answers[key];
+  const correct_a=r[2],correct_b=r[3];
+  if(ans.a===correct_a&&ans.b===correct_b)showToast(`${r[0]} — ${r[1]}: Correct!`,'success');
+  renderS4Table();
+  // Check all complete
+  const allOk=REQUIRED_ASSOCS.every(([a,b,ma,mb])=>{
+    const k=a+'_'+b;
+    const an=STATE.s4Answers[k];
+    return an&&an.a===ma&&an.b===mb;
+  });
+  if(allOk){STATE.completed[3]=true;renderSidebar();showToast('Stage 4 Complete! All multiplicities correct.','success')}
+}
+
+// --- STAGE 5 ---
+function renderStage5(area){
+  const html=`<div class="stage-content active fade-in">
+    <div class="stage-badge">Stage 5</div>
+    <h1 class="stage-heading">Family Trees</h1>
+    <p class="stage-intro"><strong>Inheritance</strong> (generalization) models an "is-a" relationship. A subclass inherits all attributes and methods from its superclass, and can add its own. The UML notation uses a hollow triangle arrow pointing from subclass to superclass.</p>
+
+    <div class="teach-grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px">
+      <div class="teach-card">
+        <div class="teach-card-icon">&#9651;</div>
+        <h4>SavingsAccount</h4>
+        <p><strong>is-a</strong> Account. Adds <code style="font-size:.7rem;background:#4f8eff22;color:#6ba1ff;padding:1px 4px;border-radius:3px">interestRate</code> and <code style="font-size:.7rem;background:#4f8eff22;color:#6ba1ff;padding:1px 4px;border-radius:3px">calculateInterest()</code>.</p>
+      </div>
+      <div class="teach-card">
+        <div class="teach-card-icon">&#9651;</div>
+        <h4>CheckingAccount</h4>
+        <p><strong>is-a</strong> Account. Adds <code style="font-size:.7rem;background:#4f8eff22;color:#6ba1ff;padding:1px 4px;border-radius:3px">overdraftLimit</code> and <code style="font-size:.7rem;background:#4f8eff22;color:#6ba1ff;padding:1px 4px;border-radius:3px">processCheck()</code>.</p>
+      </div>
+    </div>
+
+    <div class="interactive-area">
+      <div class="interactive-label">Drag subclasses to their correct superclass drop zones</div>
+      <div class="drag-source-area" id="s5DragSource">
+        <div class="inherit-item" draggable="true" data-class="SavingsAccount" id="s5d_SavingsAccount">SavingsAccount</div>
+        <div class="inherit-item" draggable="true" data-class="CheckingAccount" id="s5d_CheckingAccount">CheckingAccount</div>
+        <div class="inherit-item" draggable="true" data-class="CardReader" id="s5d_CardReader">CardReader</div>
+        <div class="inherit-item" draggable="true" data-class="CashDispenser" id="s5d_CashDispenser">CashDispenser</div>
+      </div>
+
+      <div style="display:flex;gap:32px;margin-top:16px">
+        <div style="flex:1">
+          <div style="text-align:center;margin-bottom:8px">
+            ${umlBoxHTML('Account',['accountNumber: String','balance: double','pin: int'],['deposit()','withdraw()','checkBalance()'],{style:'margin:0 auto'})}
+          </div>
+          <div style="text-align:center;color:var(--text-muted);font-size:1.2rem;margin:4px 0">&#9651;</div>
+          <div style="display:flex;gap:12px;justify-content:center">
+            <div class="drop-zone inherit-drop" id="s5drop_Account_0" data-parent="Account" style="flex:1;max-width:200px">
+              <span class="drop-zone-label">Subclass 1</span>
+            </div>
+            <div class="drop-zone inherit-drop" id="s5drop_Account_1" data-parent="Account" style="flex:1;max-width:200px">
+              <span class="drop-zone-label">Subclass 2</span>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div style="text-align:center;margin-bottom:8px">
+            ${umlBoxHTML('ATM',['atmId: String','location: String'],['displayMenu()','readCard()','ejectCard()'],{style:'margin:0 auto'})}
+          </div>
+          <div style="text-align:center;color:var(--text-muted);font-size:0.72rem;margin:4px 0;font-family:var(--font-mono)">&#9671; composition</div>
+          <div style="display:flex;gap:12px;justify-content:center">
+            <div class="drop-zone inherit-drop" id="s5drop_ATM_0" data-parent="ATM" style="flex:1;max-width:200px">
+              <span class="drop-zone-label">Component 1</span>
+            </div>
+            <div class="drop-zone inherit-drop" id="s5drop_ATM_1" data-parent="ATM" style="flex:1;max-width:200px">
+              <span class="drop-zone-label">Component 2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  area.innerHTML=html;
+  initStage5DnD();
+  restoreStage5();
+}
+
+const S5_CORRECT={
+  Account:['SavingsAccount','CheckingAccount'],
+  ATM:['CardReader','CashDispenser']
+};
+
+function initStage5DnD(){
+  const items=document.querySelectorAll('#s5DragSource .inherit-item');
+  const zones=document.querySelectorAll('.inherit-drop');
+  items.forEach(item=>{
+    item.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',item.dataset.class);item.classList.add('dragging')});
+    item.addEventListener('dragend',()=>item.classList.remove('dragging'));
+  });
+  zones.forEach(zone=>{
+    zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over')});
+    zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();zone.classList.remove('drag-over');
+      const cls=e.dataTransfer.getData('text/plain');
+      const parent=zone.dataset.parent;
+      const validChildren=S5_CORRECT[parent];
+      if(validChildren&&validChildren.includes(cls)){
+        zone.classList.add('filled');
+        zone.innerHTML=`<span class="placed-text">${cls}</span>`;
+        STATE.s5Placed[cls]=parent;
+        document.getElementById('s5d_'+cls)?.classList.add('placed');
+        showToast(`${cls} correctly placed!`,'success');
+        checkStage5();
+      } else {
+        zone.classList.add('wrong');
+        setTimeout(()=>zone.classList.remove('wrong'),500);
+        showToast(`${cls} doesn't belong under ${parent}.`,'error');
+      }
+    });
+  });
+}
+
+function restoreStage5(){
+  Object.entries(STATE.s5Placed).forEach(([cls,parent])=>{
+    // Find an empty zone with that parent
+    const zones=document.querySelectorAll(`.inherit-drop[data-parent="${parent}"]`);
+    for(const z of zones){
+      if(!z.classList.contains('filled')){
+        z.classList.add('filled');
+        z.innerHTML=`<span class="placed-text">${cls}</span>`;
+        break;
+      }
+    }
+    const di=document.getElementById('s5d_'+cls);
+    if(di)di.classList.add('placed');
+  });
+}
+
+function checkStage5(){
+  const all=['SavingsAccount','CheckingAccount','CardReader','CashDispenser'];
+  if(all.every(c=>STATE.s5Placed[c])){
+    STATE.completed[4]=true;renderSidebar();showToast('Stage 5 Complete!','success');
+  }
+}
+
+// --- STAGE 6 ---
+function renderStage6(area){
+  const html=`<div class="stage-content active fade-in">
+    <div class="stage-badge">Stage 6</div>
+    <h1 class="stage-heading">The Complete ATM System</h1>
+    <p class="stage-intro">Here is your assembled UML class diagram for the ATM system. Review the complete structural model with all classes, associations, multiplicities, and inheritance relationships.</p>
+
+    <div class="interactive-area" style="padding:0;overflow:visible;position:relative">
+      <button class="btn-export" onclick="exportDiagram()">&#8681; Export as PNG</button>
+      <div class="final-canvas" id="s6Canvas"></div>
+    </div>
+
+    <div class="score-panel">
+      <div style="font-size:.72rem;font-family:var(--font-mono);color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Completeness Review</div>
+      <div id="s6Score"></div>
+    </div>
+  </div>`;
+  area.innerHTML=html;
+  renderFinalDiagram();
+  renderScore();
+}
+
+function renderFinalDiagram(){
+  const container=document.getElementById('s6Canvas');
+  const W=980,H=680;
+  const positions={
+    Customer:{x:20,y:20},
+    Bank:{x:20,y:300},
+    Account:{x:280,y:20},
+    SavingsAccount:{x:220,y:260},
+    CheckingAccount:{x:430,y:260},
+    ATM:{x:560,y:20},
+    Transaction:{x:770,y:20},
+    CardReader:{x:560,y:300},
+    CashDispenser:{x:770,y:300},
+  };
+
+  function classBox(name,x,y){
+    const cd=CLASSES_DATA[name];
+    const bw=190,headerH=28;
+    const attrH=Math.max(22,cd.attrs.length*17+8);
+    const methH=Math.max(22,cd.methods.length*17+8);
+    const totalH=headerH+attrH+methH;
+    let s=`<g>
+      <rect x="${x}" y="${y}" width="${bw}" height="${totalH}" fill="#fef9e7" stroke="#2c2c2c" stroke-width="2" rx="2"/>
+      <rect x="${x}" y="${y}" width="${bw}" height="${headerH}" fill="#f5e6a3" stroke="#2c2c2c" stroke-width="2" rx="2"/>
+      <text x="${x+bw/2}" y="${y+19}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="700" fill="#1a1a1a">${name}</text>
+      <line x1="${x}" y1="${y+headerH}" x2="${x+bw}" y2="${y+headerH}" stroke="#2c2c2c" stroke-width="1"/>`;
+    cd.attrs.forEach((a,i)=>{
+      s+=`<text x="${x+8}" y="${y+headerH+15+i*17}" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#1a1a1a">${a}</text>`;
+    });
+    s+=`<line x1="${x}" y1="${y+headerH+attrH}" x2="${x+bw}" y2="${y+headerH+attrH}" stroke="#2c2c2c" stroke-width="1"/>`;
+    cd.methods.forEach((m,i)=>{
+      s+=`<text x="${x+8}" y="${y+headerH+attrH+15+i*17}" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#1a1a1a">${m}</text>`;
+    });
+    s+=`</g>`;
+    return {svg:s,cx:x+bw/2,cy:y+totalH/2,x,y,w:bw,h:totalH};
+  }
+
+  let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" id="finalSVG" style="background:#0a0e1a">`;
+  // Grid
+  for(let gx=0;gx<W;gx+=25)for(let gy=0;gy<H;gy+=25)svg+=`<circle cx="${gx}" cy="${gy}" r="0.5" fill="#1a2235"/>`;
+
+  // Compute boxes
+  const boxes={};
+  Object.entries(positions).forEach(([name,pos])=>{
+    boxes[name]=classBox(name,pos.x,pos.y);
+  });
+
+  // Draw associations
+  function assocLine(a,b,ma,mb){
+    const ba=boxes[a],bb=boxes[b];
+    // Find connection points
+    let x1,y1,x2,y2;
+    // Simple: connect centers, clip at box edges
+    x1=ba.cx;y1=ba.cy;x2=bb.cx;y2=bb.cy;
+    // Adjust to edges
+    const dx=x2-x1,dy=y2-y1;
+    const angle=Math.atan2(dy,dx);
+    // From a
+    if(Math.abs(Math.cos(angle))*ba.h/2>Math.abs(Math.sin(angle))*ba.w/2){
+      x1=ba.x+(Math.cos(angle)>0?ba.w:0);y1=ba.cy+Math.tan(angle)*(x1-ba.cx);
+    }else{
+      y1=ba.y+(Math.sin(angle)>0?ba.h:0);x1=ba.cx+(y1-ba.cy)/Math.tan(angle);
+    }
+    // From b (reverse)
+    const angle2=angle+Math.PI;
+    if(Math.abs(Math.cos(angle2))*bb.h/2>Math.abs(Math.sin(angle2))*bb.w/2){
+      x2=bb.x+(Math.cos(angle2)>0?bb.w:0);y2=bb.cy+Math.tan(angle2)*(x2-bb.cx);
+    }else{
+      y2=bb.y+(Math.sin(angle2)>0?bb.h:0);x2=bb.cx+(y2-bb.cy)/Math.tan(angle2);
+    }
+    let s=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#6b7fa0" stroke-width="1.5"/>`;
+    // Labels
+    const lx1=x1+(x2-x1)*0.15, ly1=y1+(y2-y1)*0.15-6;
+    const lx2=x1+(x2-x1)*0.85, ly2=y1+(y2-y1)*0.85-6;
+    s+=`<text x="${lx1}" y="${ly1}" font-family="IBM Plex Mono,monospace" font-size="10" fill="#4f8eff" font-weight="600">${ma}</text>`;
+    s+=`<text x="${lx2}" y="${ly2}" font-family="IBM Plex Mono,monospace" font-size="10" fill="#4f8eff" font-weight="600">${mb}</text>`;
+    return s;
+  }
+
+  REQUIRED_ASSOCS.forEach(([a,b,ma,mb])=>{
+    if(boxes[a]&&boxes[b])svg+=assocLine(a,b,ma,mb);
+  });
+
+  // Draw inheritance arrows
+  function inheritArrow(parent,child){
+    const bp=boxes[parent],bc=boxes[child];
+    const x1=bc.cx,y1=bc.y;
+    const x2=bp.cx,y2=bp.y+bp.h;
+    // Triangle
+    const tw=8,th=12;
+    svg+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2+th}" stroke="#34d399" stroke-width="2"/>`;
+    svg+=`<polygon points="${x2},${y2} ${x2-tw},${y2+th} ${x2+tw},${y2+th}" fill="none" stroke="#34d399" stroke-width="2"/>`;
+  }
+  inheritArrow('Account','SavingsAccount');
+  inheritArrow('Account','CheckingAccount');
+
+  // Draw class boxes on top
+  Object.values(boxes).forEach(b=>svg+=b.svg);
+
+  svg+=`</svg>`;
+  container.innerHTML=svg;
+}
+
+function renderScore(){
+  const el=document.getElementById('s6Score');
+  const checks=[
+    ['Stage 1: Class anatomy understood',STATE.completed[0]],
+    ['Stage 2: Account class built correctly',STATE.completed[1]],
+    ['Stage 3: All 8 associations identified',STATE.completed[2]],
+    ['Stage 4: All multiplicities correct',STATE.completed[3]],
+    ['Stage 5: Inheritance relationships placed',STATE.completed[4]],
+  ];
+  const total=checks.filter(c=>c[1]).length;
+  el.innerHTML=checks.map(([label,ok])=>`<div class="score-row">
+    <span>${label}</span>
+    <span class="score-val ${ok?'pass':'fail'}">${ok?'&#10003; Complete':'&#10007; Incomplete'}</span>
+  </div>`).join('')+`<div class="score-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:12px">
+    <span style="font-weight:700">Overall Score</span>
+    <span class="score-val ${total===5?'pass':''}" style="font-size:1.1rem">${total}/5</span>
+  </div>`;
+  if(total===5)STATE.completed[5]=true;
+  renderSidebar();
+}
+
+function exportDiagram(){
+  const svgEl=document.getElementById('finalSVG');
+  if(!svgEl){showToast('No diagram to export','error');return}
+  const svgData=new XMLSerializer().serializeToString(svgEl);
+  const canvas=document.createElement('canvas');
+  canvas.width=980;canvas.height=680;
+  const ctx=canvas.getContext('2d');
+  const img=new Image();
+  img.onload=function(){
+    ctx.fillStyle='#0a0e1a';ctx.fillRect(0,0,980,680);
+    ctx.drawImage(img,0,0);
+    const a=document.createElement('a');
+    a.download='atm-uml-diagram.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+    showToast('Diagram exported!','success');
+  };
+  img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svgData)));
+}
+
+// ========================
+// TOAST
+// ========================
+function showToast(msg,type='info'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+type+' show';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ========================
+// CELEBRATION
+// ========================
+function celebrate(){
+  if(!STATE.completed.every(Boolean)){showToast('Complete all stages first!','error');return}
+  const container=document.getElementById('confettiContainer');
+  const colors=['#4f8eff','#34d399','#fbbf24','#f87171','#a78bfa','#f472b6'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');
+    el.className='confetti';
+    el.style.cssText=`left:${Math.random()*100}%;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;background:${colors[i%colors.length]};border-radius:${Math.random()>.5?'50%':'2px'};animation:confettiFall ${2+Math.random()*2}s ease-out ${Math.random()*0.5}s forwards`;
+    container.appendChild(el);
+  }
+  const style=document.createElement('style');
+  style.textContent=`@keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(${360+Math.random()*360}deg)}}`;
+  document.head.appendChild(style);
+  showToast('Congratulations! ATM System Design Complete!','success');
+  setTimeout(()=>{container.innerHTML=''},4000);
+}
+
+// ========================
+// INIT
+// ========================
+renderAll();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"75124c326cb447fe934cde04713ae013","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
