@@ -1,4 +1,8 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false
+  "rewrites": [
+    {
+      "source": "/interactive_class_diagram",
+      "destination": "/index.html"
+    }
+  ]
 }
