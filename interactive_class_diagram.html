@@ -141,6 +141,20 @@ input,select{font-family:var(--font-mono);outline:none}
 .flip-card-back .hint-text{font-size:0.78rem;color:var(--text-secondary);line-height:1.5}
 .flip-card:not(.flipped) .flip-card-back{pointer-events:none}
 
+/* === STAGE 2: CLASS BUILDER === */
+.stage2-layout{display:grid;grid-template-columns:350px 1fr;gap:20px;align-start}
+.stage2-left{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px}
+.stage2-right{display:flex;flex-direction:column;gap:15px}
+.stage2-right .canvas-container{background:var(--bg-deep);border:1px solid var(--border);border-radius:12px;padding:20px;min-height:400px}
+#s2Canvas{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+#s2Canvas .uml-box{margin:0}
+
+@media (max-width: 900px) {
+  .stage2-layout{grid-template-columns:1fr}
+  .stage2-left{order:2}
+  .stage2-right{order:1}
+}
+
 /* === STAGE 3: CANVAS === */
 .canvas-container{position:relative;background:var(--bg-deep);border:1px solid var(--border);border-radius:12px;height:480px;overflow:hidden}
 .canvas-container svg{width:100%;height:100%}
@@ -579,6 +593,115 @@ function renderS2ClassesCreated(){
   }
 }
 
+function renderS2Canvas(){
+  const el=document.getElementById('s2Canvas');
+  if(el){
+    const classes=Object.keys(STATE.s2Classes);
+    el.innerHTML=classes.map(cls=>{
+      const c=STATE.s2Classes[cls];
+      return umlBoxHTML(cls,c.attrs,c.methods);
+    }).join('');
+  }
+}
+
+function showS2Hint(){
+  const currentClass=STATE.s2CurrentClass;
+  const hintData={
+    Account:{
+      attrs:['accountNumber: String','balance: double','pin: int'],
+      methods:['deposit()','withdraw()','checkBalance()'],
+      description:'An Account should have identification, balance, and security information, along with methods to manage funds.'
+    },
+    Customer:{
+      attrs:['name: String','customerId: String','address: String'],
+      methods:['authenticate()','makeTransaction()'],
+      description:'A Customer needs personal information and methods to interact with the system.'
+    },
+    ATM:{
+      attrs:['atmId: String','location: String','bankId: String','cashAvailable: double'],
+      methods:['dispenseCash()','processTransaction()','authenticateCard()'],
+      description:'An ATM needs identification, location, bank association, cash availability, and transaction processing methods.'
+    },
+    Bank:{
+      attrs:['bankId: String','name: String','address: String'],
+      methods:['manageATMs()','createAccount()','processTransaction()'],
+      description:'A Bank needs identification, name, location, and methods to manage ATMs and accounts.'
+    },
+    Transaction:{
+      attrs:['transactionId: String','accountId: String','amount: double','type: String','date: Date'],
+      methods:['process()','getDetails()'],
+      description:'A Transaction needs identification, account association, amount, type, timestamp, and processing methods.'
+    }
+  };
+  
+  const hint=hintData[currentClass];
+  const hintEl=document.getElementById('s2Hint');
+  const hintClassEl=document.getElementById('s2HintClass');
+  const hintContentEl=document.getElementById('s2HintContent');
+  
+  if(hintEl&&hintClassEl&&hintContentEl&&hint){
+    hintClassEl.textContent=currentClass;
+    hintContentEl.innerHTML=`
+      <div style="margin-bottom:8px"><strong>Recommended attributes:</strong> ${hint.attrs.join(', ')}</div>
+      <div style="margin-bottom:8px"><strong>Recommended methods:</strong> ${hint.methods.join(', ')}</div>
+      <div><strong>Why:</strong> ${hint.description}</div>
+    `;
+    hintEl.style.display='block';
+  }
+}
+
+function applyS2Hint(){
+  const currentClass=STATE.s2CurrentClass;
+  const hintData={
+    Account:{
+      attrs:['accountNumber: String','balance: double','pin: int'],
+      methods:['deposit()','withdraw()','checkBalance()']
+    },
+    Customer:{
+      attrs:['name: String','customerId: String','address: String'],
+      methods:['authenticate()','makeTransaction()']
+    },
+    ATM:{
+      attrs:['atmId: String','location: String','bankId: String','cashAvailable: double'],
+      methods:['dispenseCash()','processTransaction()','authenticateCard()']
+    },
+    Bank:{
+      attrs:['bankId: String','name: String','address: String'],
+      methods:['manageATMs()','createAccount()','processTransaction()']
+    },
+    Transaction:{
+      attrs:['transactionId: String','accountId: String','amount: double','type: String','date: Date'],
+      methods:['process()','getDetails()']
+    }
+  };
+  
+  const hint=hintData[currentClass];
+  if(hint){
+    // Clear existing attributes and methods
+    STATE.s2Classes[currentClass].attrs=[];
+    STATE.s2Classes[currentClass].methods=[];
+    
+    // Add hint attributes and methods
+    hint.attrs.forEach(attr=>{
+      STATE.s2Classes[currentClass].attrs.push(attr);
+    });
+    hint.methods.forEach(method=>{
+      STATE.s2Classes[currentClass].methods.push(method);
+    });
+    
+    // Update UI
+    renderS2Chips();
+    renderS2Canvas();
+    renderS2ClassesCreated();
+    checkStage2();
+    showToast(`Applied hint for ${currentClass} class!`,'success');
+    
+    // Hide hint
+    const hintEl=document.getElementById('s2Hint');
+    if(hintEl)hintEl.style.display='none';
+  }
+}
+
 // --- STAGE 1 ---
 function renderStage1(area){
   const html=`<div class="stage-content active fade-in">
@@ -736,52 +859,69 @@ function renderStage2(area){
   const html=`<div class="stage-content active fade-in">
     <div class="stage-badge">Stage 2</div>
     <h1 class="stage-heading">Create Your Class</h1>
-    <p class="stage-intro">Now it's your turn. Build all the classes needed for the ATM system. Select a class from the dropdown and add the correct attributes and methods. The UML box on the right updates live as you add items.</p>
+    <p class="stage-intro">Now it's your turn. Build all the classes needed for the ATM system. Select a class from the dropdown and add the correct attributes and methods. The canvas on the right shows all configured classes.</p>
 
     <div class="interactive-area">
-      <div class="interactive-label">Class Builder</div>
-      <div class="builder-row">
-        <div class="builder-form">
-          <div class="input-group">
-            <label>Select Class to Build</label>
-            <select id="s2ClassSelect" onchange="changeS2Class()">
-              <option value="Account">Account</option>
-              <option value="Customer">Customer</option>
-              <option value="ATM">ATM</option>
-              <option value="Bank">Bank</option>
-              <option value="Transaction">Transaction</option>
-            </select>
-          </div>
-          <div class="input-group">
-            <label>Add Attributes <span style="color:var(--text-muted)">(pick from suggestions)</span></label>
-            <div id="s2AttrChips" style="margin-bottom:8px"></div>
-            <div class="input-row">
-              <select id="s2AttrSelect">
-                <option value="">— select attribute —</option>
+      <div class="stage2-layout">
+        <div class="stage2-left">
+          <div class="interactive-label">Class Builder</div>
+          <div class="builder-form">
+            <div class="input-group">
+              <label>Select Class to Build</label>
+              <select id="s2ClassSelect" onchange="changeS2Class()">
+                <option value="Account">Account</option>
+                <option value="Customer">Customer</option>
+                <option value="ATM">ATM</option>
+                <option value="Bank">Bank</option>
+                <option value="Transaction">Transaction</option>
               </select>
-              <button class="btn-add" onclick="addS2Attr()">+ Add</button>
             </div>
-          </div>
-          <div class="input-group">
-            <label>Add Methods <span style="color:var(--text-muted)">(pick from suggestions)</span></label>
-            <div id="s2MethodChips" style="margin-bottom:8px"></div>
-            <div class="input-row">
-              <select id="s2MethodSelect">
-                <option value="">— select method —</option>
-              </select>
-              <button class="btn-add" onclick="addS2Method()">+ Add</button>
+            <div class="input-group">
+              <label>Add Attributes <span style="color:var(--text-muted)">(pick from suggestions)</span></label>
+              <div id="s2AttrChips" style="margin-bottom:8px"></div>
+              <div class="input-row">
+                <select id="s2AttrSelect">
+                  <option value="">— select attribute —</option>
+                </select>
+                <button class="btn-add" onclick="addS2Attr()">+ Add</button>
+              </div>
             </div>
+            <div class="input-group">
+              <label>Add Methods <span style="color:var(--text-muted)">(pick from suggestions)</span></label>
+              <div id="s2MethodChips" style="margin-bottom:8px"></div>
+              <div class="input-row">
+                <select id="s2MethodSelect">
+                  <option value="">— select method —</option>
+                </select>
+                <button class="btn-add" onclick="addS2Method()">+ Add</button>
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Need Help?</label>
+              <button class="btn btn-secondary" onclick="showS2Hint()">💡 Get Hint</button>
+              <div id="s2Hint" style="margin-top:10px;font-size:.8rem;color:var(--text-secondary);display:none">
+                <div style="padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;">
+                  <div style="font-weight:600;margin-bottom:8px">Hint for <span id="s2HintClass"></span></div>
+                  <div id="s2HintContent"></div>
+                  <div style="margin-top:10px">
+                    <button class="btn btn-sm btn-primary" onclick="applyS2Hint()">Apply Hint</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="s2Feedback" style="margin-top:10px;font-size:.8rem;font-family:var(--font-mono);"></div>
           </div>
-          <div id="s2Feedback" style="margin-top:10px;font-size:.8rem;font-family:var(--font-mono);"></div>
         </div>
-        <div class="builder-preview">
-          <div style="font-size:.72rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:10px;">LIVE PREVIEW</div>
-          <div id="s2Preview"></div>
+        <div class="stage2-right">
+          <div class="interactive-label">Class Canvas</div>
+          <div class="canvas-container" style="min-height:400px;">
+            <div id="s2Canvas"></div>
+          </div>
+          <div style="margin-top:15px">
+            <div style="font-size:.8rem;color:var(--text-secondary);margin-bottom:10px;">Classes Created:</div>
+            <div id="s2ClassesCreated"></div>
+          </div>
         </div>
-      </div>
-      <div style="margin-top:20px">
-        <div style="font-size:.8rem;color:var(--text-secondary);margin-bottom:10px;">Classes Created:</div>
-        <div id="s2ClassesCreated"></div>
       </div>
     </div>
   </div>`;
@@ -796,7 +936,7 @@ function renderStage2(area){
   };
   updateS2Selects();
   renderS2Chips();
-  renderS2Preview();
+  renderS2Canvas();
   renderS2ClassesCreated();
   checkStage2();
 }
@@ -807,7 +947,7 @@ function addS2Attr(){
   const currentClass=STATE.s2CurrentClass;
   if(STATE.s2Classes[currentClass].attrs.includes(val)){showToast('Already added','info');return}
   STATE.s2Classes[currentClass].attrs.push(val);sel.value='';
-  renderS2Chips();renderS2Preview();renderS2ClassesCreated();checkStage2();
+  renderS2Chips();renderS2Canvas();renderS2ClassesCreated();checkStage2();
 }
 function addS2Method(){
   const sel=document.getElementById('s2MethodSelect');
@@ -815,10 +955,10 @@ function addS2Method(){
   const currentClass=STATE.s2CurrentClass;
   if(STATE.s2Classes[currentClass].methods.includes(val)){showToast('Already added','info');return}
   STATE.s2Classes[currentClass].methods.push(val);sel.value='';
-  renderS2Chips();renderS2Preview();renderS2ClassesCreated();checkStage2();
+  renderS2Chips();renderS2Canvas();renderS2ClassesCreated();checkStage2();
 }
-function removeS2Attr(i){const currentClass=STATE.s2CurrentClass;STATE.s2Classes[currentClass].attrs.splice(i,1);renderS2Chips();renderS2Preview();renderS2ClassesCreated();checkStage2()}
-function removeS2Method(i){const currentClass=STATE.s2CurrentClass;STATE.s2Classes[currentClass].methods.splice(i,1);renderS2Chips();renderS2Preview();renderS2ClassesCreated();checkStage2()}
+function removeS2Attr(i){const currentClass=STATE.s2CurrentClass;STATE.s2Classes[currentClass].attrs.splice(i,1);renderS2Chips();renderS2Canvas();renderS2ClassesCreated();checkStage2()}
+function removeS2Method(i){const currentClass=STATE.s2CurrentClass;STATE.s2Classes[currentClass].methods.splice(i,1);renderS2Chips();renderS2Canvas();renderS2ClassesCreated();checkStage2()}
 
 function renderS2Chips(){
   const currentClass=STATE.s2CurrentClass;
@@ -842,13 +982,6 @@ function renderS2Chips(){
   if(ac)ac.innerHTML=STATE.s2Classes[currentClass].attrs.map((a,i)=>`<span class="chip ${expected_attrs.includes(a)?'valid':''}">${a}<span class="chip-x" onclick="removeS2Attr(${i})">&times;</span></span>`).join('');
   const mc=document.getElementById('s2MethodChips');
   if(mc)mc.innerHTML=STATE.s2Classes[currentClass].methods.map((m,i)=>`<span class="chip ${expected_methods.includes(m)?'valid':''}">${m}<span class="chip-x" onclick="removeS2Method(${i})">&times;</span></span>`).join('');
-}
-function renderS2Preview(){
-  const currentClass=STATE.s2CurrentClass;
-  const attrs=STATE.s2Classes[currentClass].attrs;
-  const methods=STATE.s2Classes[currentClass].methods;
-  const el=document.getElementById('s2Preview');
-  if(el)el.innerHTML=umlBoxHTML(currentClass,attrs,methods);
 }
 function checkStage2(){
   const expected_attrs={
