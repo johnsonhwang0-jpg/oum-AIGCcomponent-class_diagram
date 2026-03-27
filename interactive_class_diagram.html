@@ -264,7 +264,10 @@ input,select{font-family:var(--font-mono);outline:none}
 // ========================
 const STATE = {
   currentStage: 0,
-  completed: [false,false,false,false,false,false],
+  completed: [false,false,false,false,false,false,false],
+  // Stage 0
+  s0Flipped1: false,
+  s0Flipped2: false,
   // Stage 1
   s1Drops: {name:null, attrs:null, methods:null},
   s1Quiz: [false,false,false],
@@ -281,6 +284,7 @@ const STATE = {
 };
 
 const STAGES = [
+  {title:'The Challenge', desc:'Design an ATM system'},
   {title:'What is a Class?', desc:'The three parts'},
   {title:'Create Your First Class', desc:'Building a single class'},
   {title:'Connecting Classes', desc:'Association relationships'},
@@ -336,11 +340,11 @@ function renderSidebar(){
 }
 
 function updateProgress(){
-  const pct=((STATE.currentStage+1)/6)*100;
+  const pct=((STATE.currentStage+1)/7)*100;
   document.getElementById('progressFill').style.width=pct+'%';
-  document.getElementById('navLabel').textContent=`Stage ${STATE.currentStage+1} of 6`;
+  document.getElementById('navLabel').textContent=`Stage ${STATE.currentStage+1} of 7`;
   document.getElementById('btnBack').disabled=STATE.currentStage===0;
-  document.getElementById('btnNext').textContent=STATE.currentStage===5?'Finish \u2192':'Next \u2192';
+  document.getElementById('btnNext').textContent=STATE.currentStage===6?'Finish \u2192':'Next \u2192';
 }
 
 // ========================
@@ -382,9 +386,127 @@ function umlBoxHTML(name,attrs,methods,opts={}){
 function renderStage(){
   const area=document.getElementById('contentArea');
   area.innerHTML='';
-  const fns=[renderStage1,renderStage2,renderStage3,renderStage4,renderStage5,renderStage6];
+  const fns=[renderStage0,renderStage1,renderStage2,renderStage3,renderStage4,renderStage5,renderStage6];
   fns[STATE.currentStage](area);
   area.querySelector('.stage-content')?.classList.add('active');
+}
+
+// --- STAGE 0: CHALLENGE ---
+function renderStage0(area){
+  const flipped1 = STATE.s0Flipped1;
+  const flipped2 = STATE.s0Flipped2;
+  const bothFlipped = flipped1 && flipped2;
+  const html=`<div class="stage-content active fade-in">
+    <div class="stage-badge">Stage 0</div>
+    <h1 class="stage-heading">Design an ATM System</h1>
+    <p class="stage-intro">Before we learn UML, let's understand <strong>what we're building</strong>. Good design starts with understanding the problem.</p>
+
+    <div class="interactive-area">
+      <div class="interactive-label">The Challenge</div>
+      <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:20px;text-align:center">
+        <div style="font-size:3rem;margin-bottom:16px">🏧</div>
+        <h3 style="font-size:1.1rem;margin-bottom:12px;color:var(--text-primary)">ATM Self-Service Banking System</h3>
+        <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.7;max-width:600px;margin:0 auto">
+          Build a system where customers can use ATM terminals to <strong>withdraw cash</strong>, <strong>check balances</strong>, and <strong>transfer funds</strong> between their accounts. Each ATM is managed by a bank, and every operation creates a transaction record.
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1000px;margin:0 auto 20px">
+        <div class="flip-card ${flipped1?'flipped':''}" onclick="flipCard(this, 1)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-icon">👥</div>
+              <h4>Question 1</h4>
+              <p>What entities are involved in this system?</p>
+              <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:12px">
+                Think about the main "things" that need to be modeled
+              </div>
+              <div class="flip-hint">👆 Click to flip</div>
+            </div>
+            <div class="flip-card-back">
+              <h4>Key Entities</h4>
+              <div class="hint-section">
+                <div class="hint-label">Core entities:</div>
+                <div class="hint-chips">
+                  <span class="chip">Customer</span>
+                  <span class="chip">Account</span>
+                  <span class="chip">ATM</span>
+                  <span class="chip">Bank</span>
+                  <span class="chip">Transaction</span>
+                </div>
+              </div>
+              <div class="hint-section">
+                <div class="hint-label">Why these?</div>
+                <div class="hint-text">
+                  These represent the fundamental concepts in the ATM system - who (Customer), what (Account, Transaction), where (ATM), and who owns it (Bank).
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flip-card ${flipped2?'flipped':''}" onclick="flipCard(this, 2)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-icon">🔄</div>
+              <h4>Question 2</h4>
+              <p>What business needs must be met?</p>
+              <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:12px">
+                Think about the core functionality required
+              </div>
+              <div class="flip-hint">👆 Click to flip</div>
+            </div>
+            <div class="flip-card-back">
+              <h4>Business Requirements</h4>
+              <div class="hint-section">
+                <div class="hint-label">Key needs:</div>
+                <div class="hint-text">
+                  • Customers can withdraw cash from ATMs<br>
+                  • Customers can check account balances<br>
+                  • Customers can transfer funds between accounts<br>
+                  • ATM operations create transaction records<br>
+                  • Each ATM is managed by a bank
+                </div>
+              </div>
+              <div class="hint-section">
+                <div class="hint-label">Why important?</div>
+                <div class="hint-text">
+                  These requirements drive the design of our system and determine what functionality each entity must provide.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:20px">
+        <button class="btn btn-primary" id="s0StartBtn" onclick="completeStage0()" ${!bothFlipped?'disabled style="opacity:0.5"':''}>Start Learning UML →</button>
+      </div>
+    </div>
+  </div>`;
+  area.innerHTML=html;
+}
+
+function flipCard(el, cardNumber){
+  el.classList.add('flipped');
+  if(cardNumber === 1){
+    STATE.s0Flipped1 = true;
+  } else if(cardNumber === 2){
+    STATE.s0Flipped2 = true;
+  }
+  const bothFlipped = STATE.s0Flipped1 && STATE.s0Flipped2;
+  const btn = document.getElementById('s0StartBtn');
+  if(btn){
+    btn.disabled = !bothFlipped;
+    btn.style.opacity = bothFlipped ? '1' : '0.5';
+  }
+}
+
+function completeStage0(){
+  STATE.completed[0]=true;
+  STATE.currentStage=1;
+  renderAll();
+  showToast('Let\'s learn how to design classes!', 'success');
 }
 
 // --- STAGE 1 ---
@@ -535,7 +657,7 @@ function answerQuiz(idx,answer,btn){
 function checkStage1(){
   const dropsOk=STATE.s1Drops.name&&STATE.s1Drops.attrs&&STATE.s1Drops.methods;
   const quizOk=STATE.s1Quiz.every(Boolean);
-  if(dropsOk&&quizOk){STATE.completed[0]=true;renderSidebar();showToast('Stage 1 Complete!','success')}
+  if(dropsOk&&quizOk){STATE.completed[1]=true;renderSidebar();showToast('Stage 1 Complete!','success')}
 }
 
 // --- STAGE 2 ---
@@ -630,11 +752,11 @@ function checkStage2(){
   const methOk=em.every(m=>STATE.s2Methods.includes(m));
   const fb=document.getElementById('s2Feedback');
   if(attrsOk&&methOk){
-    STATE.completed[1]=true;renderSidebar();
+    STATE.completed[2]=true;renderSidebar();
     if(fb)fb.innerHTML='<span style="color:var(--success)">&#10003; All required attributes and methods added!</span>';
     showToast('Stage 2 Complete!','success');
   } else {
-    STATE.completed[1]=false;
+    STATE.completed[2]=false;
     const missing=[];
     if(!attrsOk)missing.push(`${ea.filter(a=>!STATE.s2Attrs.includes(a)).length} attribute(s)`);
     if(!methOk)missing.push(`${em.filter(m=>!STATE.s2Methods.includes(m)).length} method(s)`);
@@ -736,7 +858,7 @@ function selectS3Class(name){
       const ra=REQUIRED_ASSOCS.find(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a));
       STATE.s3Associations.push([ra[0],ra[1]]);
       showToast(`Connected ${ra[0]} — ${ra[1]}!`,'success');
-      if(STATE.s3Associations.length===8){STATE.completed[2]=true;renderSidebar();showToast('Stage 3 Complete! All associations found.','success')}
+      if(STATE.s3Associations.length===8){STATE.completed[3]=true;renderSidebar();showToast('Stage 3 Complete! All associations found.','success')}
     } else {
       showToast(`${a} and ${b} don't need a direct association.`,'error');
     }
@@ -811,7 +933,7 @@ function setMult(i,side,val){
     const an=STATE.s4Answers[k];
     return an&&an.a===ma&&an.b===mb;
   });
-  if(allOk){STATE.completed[3]=true;renderSidebar();showToast('Stage 4 Complete! All multiplicities correct.','success')}
+  if(allOk){STATE.completed[4]=true;renderSidebar();showToast('Stage 4 Complete! All multiplicities correct.','success')}
 }
 
 // --- STAGE 5 ---
@@ -935,7 +1057,7 @@ function restoreStage5(){
 function checkStage5(){
   const all=['SavingsAccount','CheckingAccount','CardReader','CashDispenser'];
   if(all.every(c=>STATE.s5Placed[c])){
-    STATE.completed[4]=true;renderSidebar();showToast('Stage 5 Complete!','success');
+    STATE.completed[5]=true;renderSidebar();showToast('Stage 5 Complete!','success');
   }
 }
 
@@ -1067,11 +1189,12 @@ function renderFinalDiagram(){
 function renderScore(){
   const el=document.getElementById('s6Score');
   const checks=[
-    ['Stage 1: Class anatomy understood',STATE.completed[0]],
-    ['Stage 2: Account class built correctly',STATE.completed[1]],
-    ['Stage 3: All 8 associations identified',STATE.completed[2]],
-    ['Stage 4: All multiplicities correct',STATE.completed[3]],
-    ['Stage 5: Inheritance relationships placed',STATE.completed[4]],
+    ['Stage 0: Challenge understood',STATE.completed[0]],
+    ['Stage 1: Class anatomy understood',STATE.completed[1]],
+    ['Stage 2: Account class built correctly',STATE.completed[2]],
+    ['Stage 3: All 8 associations identified',STATE.completed[3]],
+    ['Stage 4: All multiplicities correct',STATE.completed[4]],
+    ['Stage 5: Inheritance relationships placed',STATE.completed[5]],
   ];
   const total=checks.filter(c=>c[1]).length;
   el.innerHTML=checks.map(([label,ok])=>`<div class="score-row">
@@ -1079,9 +1202,9 @@ function renderScore(){
     <span class="score-val ${ok?'pass':'fail'}">${ok?'&#10003; Complete':'&#10007; Incomplete'}</span>
   </div>`).join('')+`<div class="score-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:12px">
     <span style="font-weight:700">Overall Score</span>
-    <span class="score-val ${total===5?'pass':''}" style="font-size:1.1rem">${total}/5</span>
+    <span class="score-val ${total===6?'pass':''}" style="font-size:1.1rem">${total}/6</span>
   </div>`;
-  if(total===5)STATE.completed[5]=true;
+  if(total===6)STATE.completed[6]=true;
   renderSidebar();
 }
 
