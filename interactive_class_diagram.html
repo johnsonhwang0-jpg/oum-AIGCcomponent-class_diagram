@@ -272,8 +272,14 @@ const STATE = {
   s1Drops: {name:null, attrs:null, methods:null},
   s1Quiz: [false,false,false],
   // Stage 2
-  s2Attrs: [],
-  s2Methods: [],
+  s2CurrentClass: 'Account',
+  s2Classes: {
+    Account:{attrs:[],methods:[]},
+    Customer:{attrs:[],methods:[]},
+    ATM:{attrs:[],methods:[]},
+    Bank:{attrs:[],methods:[]},
+    Transaction:{attrs:[],methods:[]}
+  },
   // Stage 3
   s3Selected: null,
   s3Associations: [],
@@ -286,7 +292,7 @@ const STATE = {
 const STAGES = [
   {title:'The Challenge', desc:'Design an ATM system'},
   {title:'What is a Class?', desc:'The three parts'},
-  {title:'Create Your First Class', desc:'Building a single class'},
+  {title:'Create Your Class', desc:'Building all ATM system classes'},
   {title:'Connecting Classes', desc:'Association relationships'},
   {title:'How Many?', desc:'Understanding multiplicity'},
   {title:'Family Trees', desc:'Inheritance relationships'},
@@ -509,6 +515,70 @@ function completeStage0(){
   showToast('Let\'s learn how to design classes!', 'success');
 }
 
+// --- Stage 2 Helper Functions ---
+function changeS2Class(){
+  const select=document.getElementById('s2ClassSelect');
+  if(select){
+    STATE.s2CurrentClass=select.value;
+    updateS2Selects();
+    renderS2Chips();
+    renderS2Preview();
+    checkStage2();
+  }
+}
+
+function updateS2Selects(){
+  const classData={
+    Account:{
+      attrs:['accountNumber: String','balance: double','pin: int','ownerName: String','createdDate: Date'],
+      methods:['deposit()','withdraw()','checkBalance()','transferFunds()','closeAccount()']
+    },
+    Customer:{
+      attrs:['name: String','customerId: String','address: String','phone: String','email: String'],
+      methods:['authenticate()','makeTransaction()','updateProfile()','viewAccounts()']
+    },
+    ATM:{
+      attrs:['atmId: String','location: String','bankId: String','cashAvailable: double','status: String'],
+      methods:['dispenseCash()','acceptDeposit()','processTransaction()','checkBalance()','authenticateCard()']
+    },
+    Bank:{
+      attrs:['bankId: String','name: String','address: String','branchCount: int'],
+      methods:['manageATMs()','createAccount()','processTransaction()','verifyCustomer()']
+    },
+    Transaction:{
+      attrs:['transactionId: String','accountId: String','amount: double','type: String','date: Date','status: String'],
+      methods:['process()','cancel()','getDetails()','verify()']
+    }
+  };
+  
+  const currentClass=STATE.s2CurrentClass;
+  const data=classData[currentClass];
+  
+  const attrSelect=document.getElementById('s2AttrSelect');
+  if(attrSelect){
+    attrSelect.innerHTML='<option value="">— select attribute —</option>'+
+      data.attrs.map(a=>`<option value="${a}">${a}</option>`).join('');
+  }
+  
+  const methodSelect=document.getElementById('s2MethodSelect');
+  if(methodSelect){
+    methodSelect.innerHTML='<option value="">— select method —</option>'+
+      data.methods.map(m=>`<option value="${m}">${m}</option>`).join('');
+  }
+}
+
+function renderS2ClassesCreated(){
+  const el=document.getElementById('s2ClassesCreated');
+  if(el){
+    const classes=Object.keys(STATE.s2Classes);
+    el.innerHTML=classes.map(cls=>{
+      const c=STATE.s2Classes[cls];
+      const hasContent=c.attrs.length>0||c.methods.length>0;
+      return `<span class="chip ${hasContent?'valid':''}">${cls} (${c.attrs.length} attrs, ${c.methods.length} methods)</span>`;
+    }).join(' ');
+  }
+}
+
 // --- STAGE 1 ---
 function renderStage1(area){
   const html=`<div class="stage-content active fade-in">
@@ -665,24 +735,29 @@ function renderStage2(area){
   const expected={attrs:['accountNumber: String','balance: double','pin: int'],methods:['deposit()','withdraw()','checkBalance()']};
   const html=`<div class="stage-content active fade-in">
     <div class="stage-badge">Stage 2</div>
-    <h1 class="stage-heading">Create Your First Class</h1>
-    <p class="stage-intro">Now it's your turn. Build the <strong>Account</strong> class by adding the correct attributes and methods. The UML box on the right updates live as you add items.</p>
+    <h1 class="stage-heading">Create Your Class</h1>
+    <p class="stage-intro">Now it's your turn. Build all the classes needed for the ATM system. Select a class from the dropdown and add the correct attributes and methods. The UML box on the right updates live as you add items.</p>
 
     <div class="interactive-area">
       <div class="interactive-label">Class Builder</div>
       <div class="builder-row">
         <div class="builder-form">
           <div class="input-group">
+            <label>Select Class to Build</label>
+            <select id="s2ClassSelect" onchange="changeS2Class()">
+              <option value="Account">Account</option>
+              <option value="Customer">Customer</option>
+              <option value="ATM">ATM</option>
+              <option value="Bank">Bank</option>
+              <option value="Transaction">Transaction</option>
+            </select>
+          </div>
+          <div class="input-group">
             <label>Add Attributes <span style="color:var(--text-muted)">(pick from suggestions)</span></label>
             <div id="s2AttrChips" style="margin-bottom:8px"></div>
             <div class="input-row">
               <select id="s2AttrSelect">
                 <option value="">— select attribute —</option>
-                <option value="accountNumber: String">accountNumber: String</option>
-                <option value="balance: double">balance: double</option>
-                <option value="pin: int">pin: int</option>
-                <option value="ownerName: String">ownerName: String</option>
-                <option value="createdDate: Date">createdDate: Date</option>
               </select>
               <button class="btn-add" onclick="addS2Attr()">+ Add</button>
             </div>
@@ -693,11 +768,6 @@ function renderStage2(area){
             <div class="input-row">
               <select id="s2MethodSelect">
                 <option value="">— select method —</option>
-                <option value="deposit()">deposit()</option>
-                <option value="withdraw()">withdraw()</option>
-                <option value="checkBalance()">checkBalance()</option>
-                <option value="transferFunds()">transferFunds()</option>
-                <option value="closeAccount()">closeAccount()</option>
               </select>
               <button class="btn-add" onclick="addS2Method()">+ Add</button>
             </div>
@@ -709,58 +779,112 @@ function renderStage2(area){
           <div id="s2Preview"></div>
         </div>
       </div>
+      <div style="margin-top:20px">
+        <div style="font-size:.8rem;color:var(--text-secondary);margin-bottom:10px;">Classes Created:</div>
+        <div id="s2ClassesCreated"></div>
+      </div>
     </div>
   </div>`;
   area.innerHTML=html;
-  renderS2Preview();
+  if(!STATE.s2CurrentClass)STATE.s2CurrentClass='Account';
+  if(!STATE.s2Classes)STATE.s2Classes={
+    Account:{attrs:[],methods:[]},
+    Customer:{attrs:[],methods:[]},
+    ATM:{attrs:[],methods:[]},
+    Bank:{attrs:[],methods:[]},
+    Transaction:{attrs:[],methods:[]}
+  };
+  updateS2Selects();
   renderS2Chips();
+  renderS2Preview();
+  renderS2ClassesCreated();
+  checkStage2();
 }
 
 function addS2Attr(){
   const sel=document.getElementById('s2AttrSelect');
   const val=sel.value;if(!val)return;
-  if(STATE.s2Attrs.includes(val)){showToast('Already added','info');return}
-  STATE.s2Attrs.push(val);sel.value='';
-  renderS2Chips();renderS2Preview();checkStage2();
+  const currentClass=STATE.s2CurrentClass;
+  if(STATE.s2Classes[currentClass].attrs.includes(val)){showToast('Already added','info');return}
+  STATE.s2Classes[currentClass].attrs.push(val);sel.value='';
+  renderS2Chips();renderS2Preview();renderS2ClassesCreated();checkStage2();
 }
 function addS2Method(){
   const sel=document.getElementById('s2MethodSelect');
   const val=sel.value;if(!val)return;
-  if(STATE.s2Methods.includes(val)){showToast('Already added','info');return}
-  STATE.s2Methods.push(val);sel.value='';
-  renderS2Chips();renderS2Preview();checkStage2();
+  const currentClass=STATE.s2CurrentClass;
+  if(STATE.s2Classes[currentClass].methods.includes(val)){showToast('Already added','info');return}
+  STATE.s2Classes[currentClass].methods.push(val);sel.value='';
+  renderS2Chips();renderS2Preview();renderS2ClassesCreated();checkStage2();
 }
-function removeS2Attr(i){STATE.s2Attrs.splice(i,1);renderS2Chips();renderS2Preview();checkStage2()}
-function removeS2Method(i){STATE.s2Methods.splice(i,1);renderS2Chips();renderS2Preview();checkStage2()}
+function removeS2Attr(i){const currentClass=STATE.s2CurrentClass;STATE.s2Classes[currentClass].attrs.splice(i,1);renderS2Chips();renderS2Preview();renderS2ClassesCreated();checkStage2()}
+function removeS2Method(i){const currentClass=STATE.s2CurrentClass;STATE.s2Classes[currentClass].methods.splice(i,1);renderS2Chips();renderS2Preview();renderS2ClassesCreated();checkStage2()}
 
 function renderS2Chips(){
-  const expected_attrs=['accountNumber: String','balance: double','pin: int'];
-  const expected_methods=['deposit()','withdraw()','checkBalance()'];
+  const currentClass=STATE.s2CurrentClass;
+  const expected_attrs={
+    Account:['accountNumber: String','balance: double','pin: int'],
+    Customer:['name: String','customerId: String','address: String'],
+    ATM:['atmId: String','location: String','bankId: String','cashAvailable: double'],
+    Bank:['bankId: String','name: String','address: String'],
+    Transaction:['transactionId: String','accountId: String','amount: double','type: String','date: Date']
+  }[currentClass]||[];
+  
+  const expected_methods={
+    Account:['deposit()','withdraw()','checkBalance()'],
+    Customer:['authenticate()','makeTransaction()'],
+    ATM:['dispenseCash()','processTransaction()','authenticateCard()'],
+    Bank:['manageATMs()','createAccount()','processTransaction()'],
+    Transaction:['process()','getDetails()']
+  }[currentClass]||[];
+  
   const ac=document.getElementById('s2AttrChips');
-  if(ac)ac.innerHTML=STATE.s2Attrs.map((a,i)=>`<span class="chip ${expected_attrs.includes(a)?'valid':''}">${a}<span class="chip-x" onclick="removeS2Attr(${i})">&times;</span></span>`).join('');
+  if(ac)ac.innerHTML=STATE.s2Classes[currentClass].attrs.map((a,i)=>`<span class="chip ${expected_attrs.includes(a)?'valid':''}">${a}<span class="chip-x" onclick="removeS2Attr(${i})">&times;</span></span>`).join('');
   const mc=document.getElementById('s2MethodChips');
-  if(mc)mc.innerHTML=STATE.s2Methods.map((m,i)=>`<span class="chip ${expected_methods.includes(m)?'valid':''}">${m}<span class="chip-x" onclick="removeS2Method(${i})">&times;</span></span>`).join('');
+  if(mc)mc.innerHTML=STATE.s2Classes[currentClass].methods.map((m,i)=>`<span class="chip ${expected_methods.includes(m)?'valid':''}">${m}<span class="chip-x" onclick="removeS2Method(${i})">&times;</span></span>`).join('');
 }
 function renderS2Preview(){
+  const currentClass=STATE.s2CurrentClass;
+  const attrs=STATE.s2Classes[currentClass].attrs;
+  const methods=STATE.s2Classes[currentClass].methods;
   const el=document.getElementById('s2Preview');
-  if(el)el.innerHTML=umlBoxHTML('Account',STATE.s2Attrs,STATE.s2Methods);
+  if(el)el.innerHTML=umlBoxHTML(currentClass,attrs,methods);
 }
 function checkStage2(){
-  const ea=['accountNumber: String','balance: double','pin: int'];
-  const em=['deposit()','withdraw()','checkBalance()'];
-  const attrsOk=ea.every(a=>STATE.s2Attrs.includes(a));
-  const methOk=em.every(m=>STATE.s2Methods.includes(m));
+  const expected_attrs={
+    Account:['accountNumber: String','balance: double','pin: int'],
+    Customer:['name: String','customerId: String','address: String'],
+    ATM:['atmId: String','location: String','bankId: String','cashAvailable: double'],
+    Bank:['bankId: String','name: String','address: String'],
+    Transaction:['transactionId: String','accountId: String','amount: double','type: String','date: Date']
+  };
+  
+  const expected_methods={
+    Account:['deposit()','withdraw()','checkBalance()'],
+    Customer:['authenticate()','makeTransaction()'],
+    ATM:['dispenseCash()','processTransaction()','authenticateCard()'],
+    Bank:['manageATMs()','createAccount()','processTransaction()'],
+    Transaction:['process()','getDetails()']
+  };
+  
+  let allOk=true;
+  for(const cls in expected_attrs){
+    const attrsOk=expected_attrs[cls].every(a=>STATE.s2Classes[cls].attrs.includes(a));
+    const methodsOk=expected_methods[cls].every(m=>STATE.s2Classes[cls].methods.includes(m));
+    if(!attrsOk||!methodsOk){
+      allOk=false;
+      break;
+    }
+  }
+  
   const fb=document.getElementById('s2Feedback');
-  if(attrsOk&&methOk){
+  if(allOk){
     STATE.completed[2]=true;renderSidebar();
-    if(fb)fb.innerHTML='<span style="color:var(--success)">&#10003; All required attributes and methods added!</span>';
-    showToast('Stage 2 Complete!','success');
+    if(fb)fb.innerHTML='<span style="color:var(--success)">&#10003; All required classes created!</span>';
+    showToast('Stage 2 Complete! All ATM system classes built successfully.','success');
   } else {
     STATE.completed[2]=false;
-    const missing=[];
-    if(!attrsOk)missing.push(`${ea.filter(a=>!STATE.s2Attrs.includes(a)).length} attribute(s)`);
-    if(!methOk)missing.push(`${em.filter(m=>!STATE.s2Methods.includes(m)).length} method(s)`);
-    if(fb)fb.innerHTML=`<span style="color:var(--warn)">Still missing: ${missing.join(', ')}</span>`;
+    if(fb)fb.innerHTML='<span style="color:var(--text-muted)">Add required attributes and methods for all classes</span>';
   }
 }
 
