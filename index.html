@@ -9,9 +9,9 @@
 /* === RESET & BASE === */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg-deep:#0a0e1a;--bg-panel:#111827;--bg-card:#1a2235;--bg-hover:#243049;
-  --border:#2a3550;--border-light:#3a4a6b;
-  --text-primary:#e8ecf4;--text-secondary:#8895b0;--text-muted:#5a6a88;
+  --bg-deep:#f3f7ff;--bg-panel:#ffffff;--bg-card:#f8fbff;--bg-hover:#eef4ff;
+  --border:#d7e3f5;--border-light:#c3d4ef;
+  --text-primary:#1e2a44;--text-secondary:#4c5f83;--text-muted:#7385a7;
   --accent:#4f8eff;--accent-glow:#4f8eff33;--accent-bright:#6ba1ff;
   --uml-bg:#fef9e7;--uml-border:#2c2c2c;--uml-header:#f5e6a3;--uml-text:#1a1a1a;
   --success:#34d399;--success-bg:#34d39922;--error:#f87171;--error-bg:#f8717122;
@@ -20,7 +20,7 @@
   --font-mono:'IBM Plex Mono',monospace;--font-body:'DM Sans',sans-serif;--font-display:'Playfair Display',serif;
 }
 html{font-size:15px;scroll-behavior:smooth}
-body{font-family:var(--font-body);background:var(--bg-deep);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
+body{font-family:var(--font-body);background:linear-gradient(180deg,#f5f8ff 0%,#eef4ff 100%);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
 button{font-family:inherit;cursor:pointer;border:none;outline:none}
 input,select{font-family:var(--font-mono);outline:none}
 
@@ -210,6 +210,28 @@ input,select{font-family:var(--font-mono);outline:none}
 .toast.error{background:var(--error);color:#fff}
 .toast.info{background:var(--accent);color:#fff}
 
+/* === INLINE STAGE FEEDBACK === */
+.stage-feedback{display:none;margin-bottom:18px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);font-size:0.82rem;line-height:1.55}
+.stage-feedback.show{display:block}
+.stage-feedback.info{background:#eaf2ff;border-color:#bfd4f7;color:#2f4f86}
+.stage-feedback.error{background:#ffecec;border-color:#ffc2c2;color:#9f2a2a}
+.stage-feedback.success{background:#eafaf4;border-color:#bdebd8;color:#0f6c4b}
+
+/* === CONTEXT FEEDBACK BUBBLE === */
+.context-bubble{position:fixed;z-index:10050;max-width:480px;padding:14px 18px;border-radius:12px;font-size:0.84rem;line-height:1.6;border:2.5px solid transparent;box-shadow:0 12px 36px #0f1b343a;animation:fadeIn .25s ease;font-weight:500;display:flex;gap:12px;align-items:flex-start;white-space:pre-line}
+.context-bubble::before{content:attr(data-icon);font-size:1.3rem;flex-shrink:0;line-height:1.2}
+.context-bubble .bubble-close{position:absolute;top:8px;right:10px;cursor:pointer;font-size:1.2rem;color:inherit;opacity:0.6;transition:opacity .2s}
+.context-bubble .bubble-close:hover{opacity:1}
+.context-bubble.info{background:linear-gradient(135deg,#e3f2fd 0%,#f0f7ff 100%);border-color:#7eb3ff;color:#1565c0}
+.context-bubble.error{background:linear-gradient(135deg,#ffebee 0%,#fff5f5 100%);border-color:#ff5252;color:#b71c1c;font-weight:700}
+.context-bubble.success{background:linear-gradient(135deg,#e8f5e9 0%,#f1f8e9 100%);border-color:#66bb6a;color:#1b5e20}
+.context-bubble.blocker-bubble{bottom:92px;top:auto;max-width:min(560px,calc(100vw - 36px));padding:16px 48px 16px 20px;border-width:3px;box-shadow:0 18px 44px #b71c1c35;animation:blockerPop .24s ease, blockerPulse 1.6s ease-in-out infinite}
+
+/* === SUCCESS MODAL TOAST === */
+.success-modal{position:fixed;top:24px;right:24px;background:transparent;display:none;z-index:10060;pointer-events:none}
+.success-modal.show{display:block}
+.success-modal-content{background:linear-gradient(135deg,#e8f5e9 0%,#f1f8e9 100%);border-radius:999px;padding:14px 22px;border:2.5px solid #34d399;box-shadow:0 14px 38px #0f6c4b28;display:flex;gap:10px;align-items:center;max-width:min(420px,calc(100vw - 48px));animation:successPop .28s ease;font-weight:700;font-size:0.92rem;color:#0f6c4b}
+
 /* === CELEBRATION === */
 .confetti-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10000}
 .confetti{position:absolute;width:10px;height:10px;top:-10px;opacity:0}
@@ -217,6 +239,9 @@ input,select{font-family:var(--font-mono);outline:none}
 /* === ANIMATIONS === */
 .fade-in{animation:fadeIn .5s ease forwards}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blockerPop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes blockerPulse{0%,100%{box-shadow:0 18px 44px #b71c1c35}50%{box-shadow:0 18px 54px #ff525260}}
+@keyframes successPop{from{opacity:0;transform:translateY(12px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
 .slide-up{animation:slideUp .4s ease forwards}
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 
@@ -263,7 +288,7 @@ input,select{font-family:var(--font-mono);outline:none}
 
     <div class="nav-bar">
       <button class="btn btn-secondary" id="btnBack" onclick="navigateStage(-1)">&#8592; Back</button>
-      <div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted)" id="navLabel">Stage 1 of 6</div>
+      <div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted)" id="navLabel">Stage 1 of 7</div>
       <button class="btn btn-primary" id="btnNext" onclick="navigateStage(1)">Next &#8594;</button>
     </div>
   </div>
@@ -279,6 +304,9 @@ input,select{font-family:var(--font-mono);outline:none}
 const STATE = {
   currentStage: 0,
   completed: [false,false,false,false,false,false,false],
+  stageFeedback: null,
+  contextBubbleTimer: null,
+  blockingMessage: null,
   // Stage 0
   s0Flipped1: false,
   s0Flipped2: false,
@@ -364,21 +392,120 @@ function updateProgress(){
   document.getElementById('progressFill').style.width=pct+'%';
   document.getElementById('navLabel').textContent=`Stage ${STATE.currentStage+1} of 7`;
   document.getElementById('btnBack').disabled=STATE.currentStage===0;
-  document.getElementById('btnNext').textContent=STATE.currentStage===6?'Finish \u2192':'Next \u2192';
+  const nextBtn=document.getElementById('btnNext');
+  nextBtn.textContent=STATE.currentStage===6?'Finish \u2192':'Next \u2192';
+  nextBtn.style.display=STATE.currentStage===0?'none':'inline-flex';
 }
 
 // ========================
 // NAVIGATION
 // ========================
+function stageScaffoldMessage(stageIdx){
+  if(stageIdx===0){
+    const pending=[];
+    if(!STATE.s0Flipped1)pending.push('flip Question 1 card');
+    if(!STATE.s0Flipped2)pending.push('flip Question 2 card');
+    return pending.length?`Before moving on, ${pending.join(' and ')}.`:'Please complete this stage first.';
+  }
+
+  if(stageIdx===1){
+    const missingDrops=['name','attrs','methods'].filter(k=>!STATE.s1Drops[k]);
+    const missingQuiz=STATE.s1Quiz.map((ok,i)=>ok?null:i+1).filter(Boolean);
+    if(missingDrops.length||missingQuiz.length){
+      const parts=[];
+      if(missingDrops.length)parts.push(`finish drag-and-drop (${missingDrops.length} section${missingDrops.length>1?'s':''} left)`);
+      if(missingQuiz.length)parts.push(`answer quiz question${missingQuiz.length>1?'s':''} ${missingQuiz.join(', ')}`);
+      return `Stage 1 is incomplete: ${parts.join(' and ')}.`;
+    }
+  }
+
+  if(stageIdx===2){
+    const expectedAttrs={
+      Account:['accountNumber: String','balance: double','pin: int'],
+      Customer:['name: String','customerId: String','address: String'],
+      ATM:['atmId: String','location: String','bankId: String','cashAvailable: double'],
+      Bank:['bankId: String','name: String','address: String'],
+      Transaction:['transactionId: String','accountId: String','amount: double','type: String','date: Date']
+    };
+    const expectedMethods={
+      Account:['deposit()','withdraw()','checkBalance()'],
+      Customer:['authenticate()','makeTransaction()'],
+      ATM:['dispenseCash()','processTransaction()','authenticateCard()'],
+      Bank:['manageATMs()','createAccount()','processTransaction()'],
+      Transaction:['process()','getDetails()']
+    };
+    const missingClasses=Object.keys(expectedAttrs).filter(cls=>{
+      const attrsOk=expectedAttrs[cls].every(a=>STATE.s2Classes[cls].attrs.includes(a));
+      const methodsOk=expectedMethods[cls].every(m=>STATE.s2Classes[cls].methods.includes(m));
+      return !attrsOk||!methodsOk;
+    });
+    if(missingClasses.length){
+      return `Stage 2 is incomplete: ${missingClasses.join(', ')} still need required items. Use “Get Hint” for guidance.`;
+    }
+  }
+
+  if(stageIdx===3){
+    const left=Math.max(0,8-STATE.s3Associations.length);
+    if(left>0)return `Stage 3 is incomplete: ${left} association${left>1?'s':''} remaining.`;
+  }
+
+  if(stageIdx===4){
+    const correctCount=REQUIRED_ASSOCS.filter(([a,b,ma,mb])=>{
+      const ans=STATE.s4Answers[a+'_'+b];
+      return ans&&ans.a===ma&&ans.b===mb;
+    }).length;
+    if(correctCount<REQUIRED_ASSOCS.length){
+      return `Stage 4 is incomplete: ${REQUIRED_ASSOCS.length-correctCount} multiplicity row${REQUIRED_ASSOCS.length-correctCount>1?'s':''} need correction.`;
+    }
+  }
+
+  if(stageIdx===5){
+    const required=['SavingsAccount','CheckingAccount','CardReader','CashDispenser'];
+    const missing=required.filter(c=>!STATE.s5Placed[c]);
+    if(missing.length)return `Stage 5 is incomplete: place ${missing.join(', ')} into the correct drop zone.`;
+  }
+
+  return 'Please complete this stage first.';
+}
+
+function canProceedFromStage(stageIdx){
+  if(STATE.completed[stageIdx])return {ok:true,message:''};
+  return {ok:false,message:stageScaffoldMessage(stageIdx)};
+}
+
 function goToStage(idx){
+  if(idx<0||idx>6)return;
+  if(idx>STATE.currentStage){
+    const guard=canProceedFromStage(STATE.currentStage);
+    if(!guard.ok){
+      showBlockerBubble(`\ud83d\uded1 Cannot skip ahead. ${guard.message}`,true);
+      return;
+    }
+    const firstIncomplete=STATE.completed.findIndex((done,i)=>i<idx&&!done);
+    if(firstIncomplete!==-1){
+      STATE.currentStage=firstIncomplete;
+      renderAll();
+      showBlockerBubble(`\ud83d\uded1 Please complete Stage ${firstIncomplete+1} first.`,true);
+      return;
+    }
+  }
   STATE.currentStage=idx;
+  clearContextBubble();
   renderAll();
 }
 function navigateStage(dir){
+  if(dir>0&&STATE.currentStage===6){celebrate();return;}
+  if(dir>0){
+    const guard=canProceedFromStage(STATE.currentStage);
+    if(!guard.ok){
+      showBlockerBubble(`\ud83d\uded1 Cannot proceed. ${guard.message}`,true);
+      return;
+    }
+  }
   const next=STATE.currentStage+dir;
-  if(next<0||next>5)return;
-  if(dir>0 && STATE.currentStage===5){celebrate();return;}
+  if(next<0||next>6)return;
   STATE.currentStage=next;
+  clearContextBubble();
   renderAll();
 }
 
@@ -406,9 +533,137 @@ function umlBoxHTML(name,attrs,methods,opts={}){
 function renderStage(){
   const area=document.getElementById('contentArea');
   area.innerHTML='';
+  clearContextBubble();
   const fns=[renderStage0,renderStage1,renderStage2,renderStage3,renderStage4,renderStage5,renderStage6];
   fns[STATE.currentStage](area);
   area.querySelector('.stage-content')?.classList.add('active');
+  injectStageFeedback();
+}
+
+function injectStageFeedback(){
+  const stageRoot=document.querySelector('#contentArea .stage-content');
+  if(!stageRoot)return;
+
+  let panel=document.getElementById('stageFeedback');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='stageFeedback';
+    panel.className='stage-feedback';
+    const intro=stageRoot.querySelector('.stage-intro');
+    if(intro)intro.insertAdjacentElement('afterend',panel);
+    else stageRoot.prepend(panel);
+  }
+
+  if(STATE.stageFeedback&&STATE.stageFeedback.stage===STATE.currentStage){
+    panel.className=`stage-feedback ${STATE.stageFeedback.type} show`;
+    panel.textContent=STATE.stageFeedback.msg;
+  } else {
+    panel.className='stage-feedback';
+    panel.textContent='';
+  }
+}
+
+function showStageFeedback(msg,type='info'){
+  STATE.stageFeedback={msg,type,stage:STATE.currentStage};
+  const panel=document.getElementById('stageFeedback');
+  if(panel){
+    panel.className=`stage-feedback ${type} show`;
+    panel.textContent=msg;
+  }
+}
+
+function clearContextBubble(){
+  const old=document.getElementById('contextBubble');
+  if(old)old.remove();
+  if(STATE.contextBubbleTimer){
+    clearTimeout(STATE.contextBubbleTimer);
+    STATE.contextBubbleTimer=null;
+  }
+}
+
+function showBlockerBubble(msg,autoClose=true){
+  clearContextBubble();
+  const bubble=document.createElement('div');
+  bubble.id='contextBubble';
+  bubble.className='context-bubble error blocker-bubble';
+  bubble.setAttribute('data-icon','🛑');
+  const msgSpan=document.createElement('span');
+  msgSpan.textContent=msg;
+  const closeBtn=document.createElement('span');
+  closeBtn.className='bubble-close';
+  closeBtn.textContent='×';
+  closeBtn.onclick=()=>clearContextBubble();
+  bubble.appendChild(msgSpan);
+  bubble.appendChild(closeBtn);
+  document.body.appendChild(bubble);
+
+  setTimeout(()=>{
+    const nextBtn=document.getElementById('btnNext');
+    const rightEdge=nextBtn?nextBtn.getBoundingClientRect().right:window.innerWidth-24;
+    let left=rightEdge-bubble.offsetWidth;
+    if(left<18)left=18;
+    if(left+bubble.offsetWidth>window.innerWidth-18)left=window.innerWidth-bubble.offsetWidth-18;
+    bubble.style.left=`${left}px`;
+    bubble.style.right='auto';
+  },0);
+
+  if(autoClose)STATE.contextBubbleTimer=setTimeout(clearContextBubble,4500);
+}
+
+function showSuccessModal(msg){
+  let modal=document.getElementById('successModal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='successModal';
+    modal.className='success-modal';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML=`<div class="success-modal-content"><span>✓</span><span>${msg}</span></div>`;
+  modal.classList.add('show');
+  if(STATE.successTimer)clearTimeout(STATE.successTimer);
+  STATE.successTimer=setTimeout(()=>modal.classList.remove('show'),3200);
+}
+
+function showContextBubble(anchor,msg,type='info',autoDismiss=true){
+  if(!anchor||typeof anchor.getBoundingClientRect!=='function'){
+    showStageFeedback(msg,type);
+    return;
+  }
+  clearContextBubble();
+  const icons={info:'ℹ️',error:'🛑',success:'✓'};
+  const bubble=document.createElement('div');
+  bubble.id='contextBubble';
+  bubble.className=`context-bubble ${type}`;
+  bubble.setAttribute('data-icon',icons[type]);
+  const msgSpan=document.createElement('span');
+  msgSpan.textContent=msg;
+  const closeBtn=document.createElement('span');
+  closeBtn.className='bubble-close';
+  closeBtn.textContent='×';
+  closeBtn.onclick=()=>clearContextBubble();
+  bubble.appendChild(msgSpan);
+  bubble.appendChild(closeBtn);
+  document.body.appendChild(bubble);
+
+  setTimeout(()=>{
+    const r=anchor.getBoundingClientRect();
+    const gap=14;
+    let left=r.left+(r.width-bubble.offsetWidth)/2;
+    let top=r.bottom+gap;
+
+    if(left+bubble.offsetWidth>window.innerWidth-16)left=window.innerWidth-bubble.offsetWidth-16;
+    if(left<16)left=16;
+    if(top+bubble.offsetHeight>window.innerHeight-16){
+      top=r.top-bubble.offsetHeight-gap;
+      if(top<16)top=16;
+    }
+
+    bubble.style.left=`${left}px`;
+    bubble.style.top=`${top}px`;
+  },0);
+
+  bubble.dataset.autoDismiss=autoDismiss?'true':'false';
+  if(autoDismiss)STATE.contextBubbleTimer=setTimeout(clearContextBubble,4800);
 }
 
 // --- STAGE 0: CHALLENGE ---
@@ -526,7 +781,7 @@ function completeStage0(){
   STATE.completed[0]=true;
   STATE.currentStage=1;
   renderAll();
-  showToast('Let\'s learn how to design classes!', 'success');
+  showSuccessModal('Let\'s learn how to design classes!');
 }
 
 // --- Stage 2 Helper Functions ---
@@ -694,7 +949,7 @@ function applyS2Hint(){
     renderS2Canvas();
     renderS2ClassesCreated();
     checkStage2();
-    showToast(`Applied hint for ${currentClass} class!`,'success');
+    showSuccessModal(`Applied hint for ${currentClass} class!`);
     
     // Hide hint
     const hintEl=document.getElementById('s2Hint');
@@ -801,12 +1056,20 @@ function initStage1DnD(){
         zone.innerHTML=`<span class="placed-text">${val==='name'?'Class Name':val==='attrs'?'Attributes':'Methods'}</span>`;
         STATE.s1Drops[slot]=val;
         document.getElementById('s1d_'+val)?.classList.add('placed');
-        showToast('Correct!','success');
+        clearContextBubble();
+        showSuccessModal('✓ Perfect placement!');
         checkStage1();
       } else {
         zone.classList.add('wrong');
         setTimeout(()=>zone.classList.remove('wrong'),500);
-        showToast('Not quite — try again!','error');
+        const expectedLabel=slot==='name'?'Class Name':slot==='attrs'?'Attributes':'Methods';
+        const draggedLabel=val==='name'?'Class Name':val==='attrs'?'Attributes':'Methods';
+        const guidance={
+          name:'The top section holds only the CLASS NAME (single concept, e.g., BankAccount).',
+          attrs:'The middle section holds ATTRIBUTES: data fields in "name: Type" format (e.g., balance: double).',
+          methods:'The bottom section holds METHODS: operations that end with () (e.g., withdraw()).'
+        };
+        showContextBubble(zone,`❌ ${draggedLabel} cannot go here—this slot is for ${expectedLabel}. ${guidance[slot]}`,'error');
       }
     });
   });
@@ -831,6 +1094,11 @@ function restoreStage1(){
 }
 
 const QUIZ_ANSWERS=['attrs','methods','name'];
+const QUIZ_HINTS=[
+  '💡 balance: double is DATA (has type info) → goes to Attributes (middle). Attributes always show "name: Type" format.',
+  '💡 withdraw() is a BEHAVIOR (has parentheses) → goes to Methods (bottom). Methods are actions the class can do.',
+  '💡 BankAccount is the CLASS NAME (single word) → goes to Class Name (top). It names the entire concept.'
+];
 function answerQuiz(idx,answer,btn){
   if(STATE.s1Quiz[idx])return;
   const correct=QUIZ_ANSWERS[idx];
@@ -838,19 +1106,20 @@ function answerQuiz(idx,answer,btn){
     btn.classList.add('correct');
     STATE.s1Quiz[idx]=true;
     btn.parentElement.querySelectorAll('.quiz-opt').forEach(b=>b.disabled=true);
-    showToast('Correct!','success');
+    clearContextBubble();
+    showSuccessModal('✓ Correct!');
     checkStage1();
   } else {
     btn.classList.add('wrong');
-    setTimeout(()=>btn.classList.remove('wrong'),600);
-    showToast('Try again!','error');
+    setTimeout(()=>btn.classList.remove('wrong'),700);
+    showContextBubble(btn.closest('.quiz-block')||btn,QUIZ_HINTS[idx],'error',false);
   }
 }
 
 function checkStage1(){
   const dropsOk=STATE.s1Drops.name&&STATE.s1Drops.attrs&&STATE.s1Drops.methods;
   const quizOk=STATE.s1Quiz.every(Boolean);
-  if(dropsOk&&quizOk){STATE.completed[1]=true;renderSidebar();showToast('Stage 1 Complete!','success')}
+  if(dropsOk&&quizOk){STATE.completed[1]=true;renderSidebar();showSuccessModal('Stage 1 Complete!')}
 }
 
 // --- STAGE 2 ---
@@ -945,7 +1214,8 @@ function addS2Attr(){
   const sel=document.getElementById('s2AttrSelect');
   const val=sel.value;if(!val)return;
   const currentClass=STATE.s2CurrentClass;
-  if(STATE.s2Classes[currentClass].attrs.includes(val)){showToast('Already added','info');return}
+  if(STATE.s2Classes[currentClass].attrs.includes(val)){showContextBubble(sel,'🔄 This attribute is already in the list for '+currentClass+'. Pick a different one or remove the chip to replace it.','info',false);return}
+  clearContextBubble();
   STATE.s2Classes[currentClass].attrs.push(val);sel.value='';
   renderS2Chips();renderS2Canvas();renderS2ClassesCreated();checkStage2();
 }
@@ -953,7 +1223,8 @@ function addS2Method(){
   const sel=document.getElementById('s2MethodSelect');
   const val=sel.value;if(!val)return;
   const currentClass=STATE.s2CurrentClass;
-  if(STATE.s2Classes[currentClass].methods.includes(val)){showToast('Already added','info');return}
+  if(STATE.s2Classes[currentClass].methods.includes(val)){showContextBubble(sel,'🔄 This method is already in the list for '+currentClass+'. Pick a different one or remove the chip to replace it.','info',false);return}
+  clearContextBubble();
   STATE.s2Classes[currentClass].methods.push(val);sel.value='';
   renderS2Chips();renderS2Canvas();renderS2ClassesCreated();checkStage2();
 }
@@ -1014,7 +1285,7 @@ function checkStage2(){
   if(allOk){
     STATE.completed[2]=true;renderSidebar();
     if(fb)fb.innerHTML='<span style="color:var(--success)">&#10003; All required classes created!</span>';
-    showToast('Stage 2 Complete! All ATM system classes built successfully.','success');
+    showSuccessModal('Stage 2 Complete! All ATM system classes built successfully.');
   } else {
     STATE.completed[2]=false;
     if(fb)fb.innerHTML='<span style="color:var(--text-muted)">Add required attributes and methods for all classes</span>';
@@ -1109,15 +1380,16 @@ function selectS3Class(name){
     // Check if this is a valid association
     const valid=REQUIRED_ASSOCS.some(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a));
     const exists=STATE.s3Associations.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
-    if(exists){showToast('Already connected!','info');renderS3Canvas();return}
+    if(exists){showContextBubble(document.getElementById('s3Canvas'),'🔄 Already connected! This relationship already exists. Try clicking a different pair.','info',false);renderS3Canvas();return}
     if(valid){
       // Normalize order
       const ra=REQUIRED_ASSOCS.find(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a));
       STATE.s3Associations.push([ra[0],ra[1]]);
-      showToast(`Connected ${ra[0]} — ${ra[1]}!`,'success');
-      if(STATE.s3Associations.length===8){STATE.completed[3]=true;renderSidebar();showToast('Stage 3 Complete! All associations found.','success')}
+      clearContextBubble();
+      showSuccessModal(`✓ Connected ${ra[0]} — ${ra[1]}!`);
+      if(STATE.s3Associations.length===8){STATE.completed[3]=true;renderSidebar();showSuccessModal('✓ Stage 3 Complete! All 8 associations found.')}
     } else {
-      showToast(`${a} and ${b} don't need a direct association.`,'error');
+      showContextBubble(document.getElementById('s3Canvas'),`❌ ${a} and ${b} are NOT directly related. Think: does one directly manage/hold the other, or do they connect through another class (like Account or Transaction)?`,'error');
     }
     renderS3Canvas();
   }
@@ -1162,11 +1434,11 @@ function renderS4Table(){
     const check=(aOk&&bOk)?'<span class="check-icon" style="color:var(--success)">&#10003;</span>':'';
     return `<tr>
       <td style="font-weight:600">${a}</td>
-      <td><select class="${aClass}" onchange="setMult(${i},'a',this.value)">
+      <td><select class="${aClass}" onchange="setMult(${i},'a',this.value,this)">
         ${opts.map(o=>`<option value="${o}"${ans.a===o?' selected':''}>${o||'—'}</option>`).join('')}
       </select></td>
       <td style="text-align:center;color:var(--text-muted)">———</td>
-      <td><select class="${bClass}" onchange="setMult(${i},'b',this.value)">
+      <td><select class="${bClass}" onchange="setMult(${i},'b',this.value,this)">
         ${opts.map(o=>`<option value="${o}"${ans.b===o?' selected':''}>${o||'—'}</option>`).join('')}
       </select></td>
       <td style="font-weight:600">${b}</td>
@@ -1175,14 +1447,22 @@ function renderS4Table(){
   }).join('');
 }
 
-function setMult(i,side,val){
+function setMult(i,side,val,selectEl){
   const r=REQUIRED_ASSOCS[i];
   const key=r[0]+'_'+r[1];
   if(!STATE.s4Answers[key])STATE.s4Answers[key]={a:'',b:''};
   STATE.s4Answers[key][side]=val;
   const ans=STATE.s4Answers[key];
   const correct_a=r[2],correct_b=r[3];
-  if(ans.a===correct_a&&ans.b===correct_b)showToast(`${r[0]} — ${r[1]}: Correct!`,'success');
+  if(val){
+    const expected=side==='a'?correct_a:correct_b;
+    if(val!==expected){
+      const className=side==='a'?r[0]:r[1];
+      const otherClass=side==='a'?r[1]:r[0];
+      showContextBubble(selectEl||document.getElementById('s4TableBody'),`❌ Not quite. From ${className} to ${otherClass}: think about how many instances relate. Expected ${expected}, not ${val}.`,'error');
+    }
+  }
+  if(ans.a===correct_a&&ans.b===correct_b){clearContextBubble();showSuccessModal(`✓ ${r[0]} — ${r[1]}: Correct!`);}
   renderS4Table();
   // Check all complete
   const allOk=REQUIRED_ASSOCS.every(([a,b,ma,mb])=>{
@@ -1190,7 +1470,7 @@ function setMult(i,side,val){
     const an=STATE.s4Answers[k];
     return an&&an.a===ma&&an.b===mb;
   });
-  if(allOk){STATE.completed[4]=true;renderSidebar();showToast('Stage 4 Complete! All multiplicities correct.','success')}
+  if(allOk){STATE.completed[4]=true;renderSidebar();showSuccessModal('Stage 4 Complete! All multiplicities correct.')}
 }
 
 // --- STAGE 5 ---
@@ -1264,6 +1544,13 @@ const S5_CORRECT={
   ATM:['CardReader','CashDispenser']
 };
 
+const S5_GUIDE={
+  SavingsAccount:'SavingsAccount is a subtype of Account (inherits account behavior).',
+  CheckingAccount:'CheckingAccount is a subtype of Account (inherits account behavior).',
+  CardReader:'CardReader is a component used by ATM, not a subtype of Account.',
+  CashDispenser:'CashDispenser is a component used by ATM, not a subtype of Account.'
+};
+
 function initStage5DnD(){
   const items=document.querySelectorAll('#s5DragSource .inherit-item');
   const zones=document.querySelectorAll('.inherit-drop');
@@ -1284,12 +1571,14 @@ function initStage5DnD(){
         zone.innerHTML=`<span class="placed-text">${cls}</span>`;
         STATE.s5Placed[cls]=parent;
         document.getElementById('s5d_'+cls)?.classList.add('placed');
-        showToast(`${cls} correctly placed!`,'success');
+        clearContextBubble();
+        showSuccessModal(`✓ ${cls} placed correctly!`);
         checkStage5();
       } else {
         zone.classList.add('wrong');
-        setTimeout(()=>zone.classList.remove('wrong'),500);
-        showToast(`${cls} doesn't belong under ${parent}.`,'error');
+        setTimeout(()=>zone.classList.remove('wrong'),700);
+        const correctParent=cls==='SavingsAccount'||cls==='CheckingAccount'?'Account':'ATM';
+        showContextBubble(zone,`❌ Wrong zone. ${S5_GUIDE[cls]} It belongs under ${correctParent}.`,'error');
       }
     });
   });
@@ -1314,7 +1603,7 @@ function restoreStage5(){
 function checkStage5(){
   const all=['SavingsAccount','CheckingAccount','CardReader','CashDispenser'];
   if(all.every(c=>STATE.s5Placed[c])){
-    STATE.completed[5]=true;renderSidebar();showToast('Stage 5 Complete!','success');
+    STATE.completed[5]=true;renderSidebar();showSuccessModal('Stage 5 Complete!');
   }
 }
 
@@ -1480,7 +1769,7 @@ function exportDiagram(){
     a.download='atm-uml-diagram.png';
     a.href=canvas.toDataURL('image/png');
     a.click();
-    showToast('Diagram exported!','success');
+    showSuccessModal('Diagram exported!');
   };
   img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svgData)));
 }
@@ -1489,6 +1778,10 @@ function exportDiagram(){
 // TOAST
 // ========================
 function showToast(msg,type='info'){
+  if(type==='info'||type==='error'){
+    showStageFeedback(msg,type);
+    return;
+  }
   const t=document.getElementById('toast');
   t.textContent=msg;t.className='toast '+type+' show';
   clearTimeout(t._timer);
@@ -1511,7 +1804,7 @@ function celebrate(){
   const style=document.createElement('style');
   style.textContent=`@keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(${360+Math.random()*360}deg)}}`;
   document.head.appendChild(style);
-  showToast('Congratulations! ATM System Design Complete!','success');
+  showSuccessModal('Congratulations! ATM System Design Complete!');
   setTimeout(()=>{container.innerHTML=''},4000);
 }
 
